@@ -35,7 +35,7 @@ def main():
     wait_time = 0.1
 
     # yeah, that's right, I turn counter-clockwise
-    send_left_speed(search_speed)
+    send_left_speed(-search_speed)
     send_right_speed(search_speed)
 
     x_pos = None
@@ -51,7 +51,7 @@ def main():
         if abs(middle_screen_value - x_pos) < target_range:
             break
         adjust_speed = get_adjust_speed(search_speed, min_adjust_speed, middle_screen_value, screen_width)
-        send_left_speed(adjust_speed)
+        send_left_speed(-adjust_speed)
         send_right_speed(adjust_speed)
         if wait_in_loops:
             time.sleep(wait_time)
