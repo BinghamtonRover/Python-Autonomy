@@ -1,4 +1,7 @@
 import time
+import sys
+from marker import driver
+from driver import *
 
 def read_marker():
     # plan to return marker horizontal location on screen
@@ -20,9 +23,9 @@ def get_adjust_speed(search_speed, min_speed, target, width):
     if adjust_speed < min_speed:
         adjust_speed = min_speed
     return adjust_speed
- 
 
 def main():
+    #values to play around with
     search_speed = 8.0
     min_adjust_speed = 2.0
     middle_screen_value = 320.0
@@ -34,6 +37,9 @@ def main():
     wait_in_loops = True
     wait_time = 0.1
 
+    # initialization
+    initialize_marker_detection()
+
     # yeah, that's right, I turn counter-clockwise
     send_left_speed(-search_speed)
     send_right_speed(search_speed)
@@ -41,6 +47,7 @@ def main():
     x_pos = None
     while True:
         x_pos = read_marker()
+        print(read_marker())
         if x_pos != -1:
             break
         if wait_in_loops:
