@@ -91,7 +91,7 @@ def pathfinding():
 
 
 def main():
-    # create a "reading thread" and "pathfinding thread"
+    # create a "reading thread" and "pathfinding thread"theme
     reading_thread = threading.Thread(target = read_data, args = ())
     pathfinding_thread = threading.Thread(target = pathfinding, args = ())
 
