@@ -27,36 +27,40 @@ class Tank:
 	def initialize_tank(self):
 		global gpio
 		#gpio = pigpio.pi()
+
+	def send_drive_data(self, throttle, left, right):
+		set_left_velocity(throttle * left)
+		set_right_velocity(throttle * right)
 		
 	def set_left_velocity(self, velocity):
 		PWM = 0
 		if (velocity == 0):
 			PWM = self.PWM_ZERO
-			#gpio.hardware_PWM(int(LEFT_MOTOR_PIN), int(PWM_FREQUENCY), int(PWM))
+			gpio.hardware_PWM(int(LEFT_MOTOR_PIN), int(PWM_FREQUENCY), int(PWM))
 		elif (velocity > 0):
 			if (velocity > self.VEL_MAX_POS):
 				velocity = self.VEL_MAX_POS
 			PWM = (self.PWM_MIN_POS + velocity * (self.PWM_MAX_POS - self.PWM_MIN_POS) / (self.VEL_MAX_POS - self.VEL_ZERO))
-			#gpio.hardware_PWM(int(LEFT_MOTOR_PIN), int(PWM_FREQUENCY), int(PWM))
+			gpio.hardware_PWM(int(LEFT_MOTOR_PIN), int(PWM_FREQUENCY), int(PWM))
 		else:
 			if (velocity < self.VEL_MAX_NEG):
 				velocity = self.VEL_MAX_NEG
 			PWM = (self.PWM_MIN_NEG + velocity * (self.PWM_MAX_NEG - self.PWM_MIN_NEG) / (self.VEL_MAX_NEG - self.VEL_ZERO))
-			#gpio.hardware_PWM(int(LEFT_MOTOR_PIN), int(PWM_FREQUENCY), int(PWM))
+			gpio.hardware_PWM(int(LEFT_MOTOR_PIN), int(PWM_FREQUENCY), int(PWM))
 		
 	def set_right_velocity(self, velocity):
 		PWM = 0
 		if (velocity == 0):
 			PWM = self.PWM_ZERO
-			#gpio.hardware_PWM(int(RIGHT_MOTOR_PIN), int(PWM_FREQUENCY), int(PWM))
+			gpio.hardware_PWM(int(RIGHT_MOTOR_PIN), int(PWM_FREQUENCY), int(PWM))
 		elif (velocity > 0):
 			if (velocity > self.VEL_MAX_POS):
 				velocity = self.VEL_MAX_POS
 			PWM = (self.PWM_MIN_POS + velocity * (self.PWM_MAX_POS - self.PWM_MIN_POS) / (self.VEL_MAX_POS - self.VEL_ZERO))
-			#gpio.hardware_PWM(int(RIGHT_MOTOR_PIN), int(PWM_FREQUENCY), int(PWM))
+			gpio.hardware_PWM(int(RIGHT_MOTOR_PIN), int(PWM_FREQUENCY), int(PWM))
 		else:
 			if (velocity < VEL_MAX_NEG):
 				velocity = VEL_MAX_NEG
 			PWM = (self.PWM_MIN_NEG + velocity * (self.PWM_MAX_NEG - self.PWM_MIN_NEG) / (self.VEL_MAX_NEG - self.VEL_ZERO))
-			#gpio.hardware_PWM(int(RIGHT_MOTOR_PIN), int(PWM_FREQUENCY), int(PWM))
+			gpio.hardware_PWM(int(RIGHT_MOTOR_PIN), int(PWM_FREQUENCY), int(PWM))
 
