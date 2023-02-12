@@ -2,17 +2,19 @@ import time
 import sys
 import driver as camera
 import socket
-import tank
+from tank import Tank
+
+drive = None
 
 def read_marker():
     # plan to return marker horizontal location on screen
     return camera.read_camera_for_marker()
 
 def send_right_speed(speed):
-    tank.set_right_velocity(speed)
+    drive.set_right_velocity(speed)
 
 def send_left_speed(speed):
-    tank.set_left_velocity(speed)
+    drive.set_left_velocity(speed)
     
 def move_forward(speed):
     send_left_speed(speed)
@@ -32,6 +34,8 @@ def get_adjust_speed(search_speed, min_speed, target, width):
 """
 
 def main():
+    global drive
+
     #values to play around with
     search_speed = 6.1
     adjust_speed = 5.1
@@ -46,7 +50,7 @@ def main():
     wait_time = 0.01
 
     # initialization
-    tank.initialize_tank()
+    drive = Tank()
     camera.initialize_marker_detection()
     
     time.sleep(4)
