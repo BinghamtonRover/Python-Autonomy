@@ -1,4 +1,4 @@
-import proto_sender
+from lib.network import ProtoClient
 from lib.network.generated.Protobuf.drive_pb2 import *
 ''' 
 Unanswered questions:
@@ -23,18 +23,18 @@ class AutonomyRover:
 		drive_message.throttle = throttle
 		drive_message.left = left
 		drive_message.right = right
-		self.messenger.send_proto(drive_message, DRIVE_COMMAND_NAME)
+		self.messenger.send_message(drive_message, DRIVE_COMMAND_NAME, ROVER_ADDRESS, ROVER_PORT)
 
 	def adjust_throttle(self, throttle = THROTTLE_DEFAULT):
 		drive_message = drive_pb2.DriveCommand()
 		drive_message.throttle = throttle
-		self.messenger.send_proto(drive_message, DRIVE_COMMAND_NAME)
+		self.messenger.send_message(drive_message, DRIVE_COMMAND_NAME, ROVER_ADDRESS, ROVER_PORT)
 
 	def adjust_speed(self, left, right):
 		command = DriveCommand()
 		command.right = right
 		command.left = left
-		self.messenger.send_proto(command, DRIVE_COMMAND_NAME)
+		self.messenger.send_message(command, DRIVE_COMMAND_NAME, ROVER_ADDRESS, ROVER_PORT)
 
 	def send_compass_data(self, direction):
 		pass

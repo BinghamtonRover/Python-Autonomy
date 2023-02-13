@@ -1,18 +1,13 @@
 import time
 import sys
-import driver as camera
+import demo.driver as camera
 import socket
-from tank import Tank
-from autonomy_drive import AutonomyRover
-
-drive = None
+from demo.tank import Tank
+from demo.autonomy_drive import AutonomyRover
 
 def read_marker():
     # plan to return marker horizontal location on screen
     return camera.read_camera_for_marker()
-
-def send_drive_data(speed, left, right):
-    drive.send_drive_data(speed, left, right)
 
 """
 def get_adjust_speed(search_speed, min_speed, target, width):
@@ -27,9 +22,7 @@ def get_adjust_speed(search_speed, min_speed, target, width):
     return adjust_speed
 """
 
-def main():
-    global drive
-
+def main(drive):
     #values to play around with
     search_speed = 6.1
     adjust_speed = 5.1
@@ -44,13 +37,12 @@ def main():
     wait_time = 0.01
 
     # initialization
-    drive = Tank()
     camera.initialize_marker_detection()
     
     time.sleep(4)
 
     # yeah, that's right, I turn counter-clockwise
-    send_drive_data(search_speed, -1.0, 1.0)
+    drive.send_drive_data(search_speed, -1.0, 1.0)
 
     x_pos = None
     while True:
@@ -61,26 +53,27 @@ def main():
             if abs(diff) < target_range:
                 break
             elif diff < 0.0:
-                send_drive_data(adjust_speed, -1.0, 1.0)
+                drive.send_drive_data(adjust_speed, -1.0, 1.0)
             else:
-                send_drive_data(adjust_speed, 1.0, -1.0)
+                drive.send_drive_data(adjust_speed, 1.0, -1.0)
         if wait_in_loops:
             time.sleep(wait_time)
             
-    send_drive_data(0.0, 0.0, 0.0)
+    drive.send_drive_data(0.0, 0.0, 0.0)
     
     time.sleep(1.0)
 
-    send_drive_data(search_speed, 1.0, 1.0)
+    drive.send_drive_data(search_speed, 1.0, 1.0)
 
     time.sleep(move_forward_time)
 
-    send_drive_data(0.0, 0.0, 0.0)
+    drive.send_drive_data(0.0, 0.0, 0.0)
     
     camera.clean_up()
 
 if __name__ == "__main__":
+    drive = Tank()  # or Rover()
     try:
-        main()
+        main(drive)
     finally:
-        send_drive_data(0.0, 0.0, 0.0)
+        drive.send_drive_data(0.0, 0.0, 0.0)
