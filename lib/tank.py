@@ -1,8 +1,8 @@
 import pigpio
 import time
 
-LEFT_MOTOR_PIN = 12
-RIGHT_MOTOR_PIN = 19
+LEFT_MOTOR_PIN = 19
+RIGHT_MOTOR_PIN = 12
 
 PWM_FREQUENCY = 50
 PWM_MAX_POS = 82500
@@ -18,7 +18,7 @@ VEL_ZERO = 0.0
 VEL_MAX_POS = 10.0
 VEL_MED_POS = 5.0
 
-class Tank:	
+class Tank:
 	def __init__(self):
 		self.gpio = pigpio.pi()
 		if not self.gpio.connected:
@@ -27,6 +27,7 @@ class Tank:
 
 
 	def send_drive_data(self, throttle, left, right):
+		throttle = throttle * 10.0
 		self.set_left_velocity(throttle * left)
 		self.set_right_velocity(throttle * right)
 		

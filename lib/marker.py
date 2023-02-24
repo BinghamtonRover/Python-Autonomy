@@ -25,25 +25,26 @@ class Marker:
             5: "Gate Right"
         }
 
-    def detect_marker(frame):
+    def detect_markers(self, frame):
         corners, ids, rejected = cv2.aruco.detectMarkers(frame, self.dictionary, parameters = self.parameters)
         if len(corners):
-            ids = ids.flatten()
             markers = []
+            index = 0
             for x in ids:
-                center = get_marker_position(x, corners)
-                markers.append(ids[0], center[0], center[1])
+                center = self.get_marker_position(x, corners[index])
+                markers.append((x[0], center[0], center[1]))
+                index += 1
             return markers
         return []
 
     # Analyze frames from video stream
-    def read_markers():
+    def read_markers(self):
         # Get frame from camera
         frame = self.vid_stream.read()
         frame = imutils.resize(frame, width=1000)
-        return detect_marker(frame)
+        return self.detect_markers(frame)
 
-    def get_marker_position(ids, corners):
+    def get_marker_position(self, ids, corners):
         # If we found an ARUCO code
         for (markerCorner, markerID) in zip(corners, ids):
             corners = markerCorner.reshape((4,2))
@@ -60,5 +61,5 @@ class Marker:
             return center
                 
 
-    def clean_up():
+    def clean_up(self):
         self.vid_stream.stop()
