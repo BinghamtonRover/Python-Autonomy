@@ -17,15 +17,11 @@ def main(drive, depth_camera, camera):
     
     #while True:
     #    print(depth_camera.get_distances(3))
+    
+    dists = depth_camera.get_distances(3)
+    quit()
 
     time.sleep(6.0)
-    
-    drive.send_drive_data(forward_speed, 1.0, 1.0)
-    time.sleep(0.4)
-    drive.send_drive_data(0.0, 1.0, 1.0)
-    time.sleep(0.4)
-    drive.send_drive_data(-forward_speed, 1.0, 1.0)
-    time.sleep(0.4)
     
     start_time = time.perf_counter()
     sleepy_time = False

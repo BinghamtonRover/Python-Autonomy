@@ -1,6 +1,8 @@
 import pyrealsense2 as rs
 import bisect
 from statistics import mean
+import cv2
+import numpy as np
 
 class DepthCamera:
     def __init__(self):
@@ -10,6 +12,7 @@ class DepthCamera:
         # Configure streams
         self.config = rs.config()
         self.config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
+        self.config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
 
         # Start streaming
         self.pipeline.start(self.config)
@@ -22,6 +25,9 @@ class DepthCamera:
     def get_distances(self, sections):
         frames = self.pipeline.wait_for_frames()
         depth = frames.get_depth_frame()
+        color = frames.get_color_frame()
+        color_image = np.asanyarray(color.get_data())
+        
         if not depth:
             return []
         dists = []
