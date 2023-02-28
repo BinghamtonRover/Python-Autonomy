@@ -3,6 +3,7 @@ import bisect
 from statistics import mean
 import cv2
 import numpy as np
+import imutils
 
 class DepthCamera:
     def __init__(self):
@@ -17,16 +18,18 @@ class DepthCamera:
         # Start streaming
         self.pipeline.start(self.config)
         
+        # cv2
+        self.dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
+        self.parameters = cv2.aruco.DetectorParameters_create()
+        
         self.minY = 30
         self.maxY = 450
         self.target_mins_total = 3000.0
-        self.zero_limit = 200000
+        self.zero_limit = 140000
 
     def get_distances(self, sections):
         frames = self.pipeline.wait_for_frames()
         depth = frames.get_depth_frame()
-        color = frames.get_color_frame()
-        color_image = np.asanyarray(color.get_data())
         
         if not depth:
             return []
@@ -49,7 +52,7 @@ class DepthCamera:
                     current_mins = []
                     current_section = sect
                     num_zeroes = 0
-                dist = 0.001 * depth.get_distance(x, y) #0.001 converts to meters
+                dist = 0.001 * depth.get_distance(x, y) #0.001 converts to meters (this actually isn't true)
                 if dist == 0.0:
                     num_zeroes += 1
                 else:
@@ -62,6 +65,42 @@ class DepthCamera:
         else:
             dists.append(0.0)
         return dists
+    
+    def read_markers(self):
+        # Get frame from camera
+        realsense_frames = self.pipeline.wait_for_frames()
+        color = realsense_frames.get_color_frame()
+        frame = np.asanyarray(color.get_data())
+        frame = imutils.resize(frame, width=1000)
+        return self.detect_markers(frame)
+
+    def detect_markers(self, frame):
+        corners, ids, rejected = cv2.aruco.detectMarkers(frame, self.dictionary, parameters = self.parameters)
+        if len(corners):
+            markers = []
+            index = 0
+            for x in ids:
+                center = self.get_marker_position(x, corners[index])
+                markers.append((x[0], center[0], center[1]))
+                index += 1
+            return markers
+        return []
+
+    def get_marker_position(self, ids, corners):
+        # If we found an ARUCO code
+        for (markerCorner, markerID) in zip(corners, ids):
+            corners = markerCorner.reshape((4,2))
+            (topLeft, topRight, bottomLeft, bottomRight) = corners
+
+            # Get corners of the code
+            topLeft = (int(topLeft[0]), int(topLeft[1]))
+            topRight = (int(topRight[0]), int(topRight[1]))
+            bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
+            bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
+
+            # Calculates center
+            center = (int((topLeft[0] + bottomLeft[0]) / 2), int((topLeft[1] + bottomLeft[1]) / 2))
+            return center
     
     def clean_up(self):
         self.pipeline.stop()
