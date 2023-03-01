@@ -5,7 +5,7 @@ import socket
 from lib.tank import Tank
 from lib.depth_camera import DepthCamera
 from lib.text_drive import TextDrive
-#from lib.autonomy_drive import AutonomyRover
+from lib.autonomy_drive import AutonomyRover
 
 def main(drive, camera):
     #values to play around with
@@ -116,7 +116,8 @@ def main(drive, camera):
     camera.clean_up()
 
 if __name__ == "__main__":
-    drive = Tank()  # or Rover()
+    # drive = Tank()  # or Rover()
+    drive = AutonomyRover()	
     #camera = Marker()
     camera = DepthCamera()
     try:
