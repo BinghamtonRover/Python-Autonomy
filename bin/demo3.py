@@ -7,7 +7,10 @@ from lib.depth_camera import DepthCamera
 from lib.text_drive import TextDrive
 #from lib.autonomy_drive import AutonomyRover
 
+from multiprocessing import Process
+
 def main(drive, camera):
+    print("Starting autonomy")
     #values to play around with
     search_speed = 0.75
     adjust_speed = 0.5
@@ -115,12 +118,19 @@ def main(drive, camera):
     drive.send_drive_data(0.0, 1.0, 1.0)
     camera.clean_up()
 
-if __name__ == "__main__":
-    drive = TextDrive() #Tank()  # or Rover()
-    #camera = Marker()
-    camera = DepthCamera()
-    try:
-        main(drive, camera)
-    finally:
-        print("shit")
-        drive.send_drive_data(0.0, 1.0, 1.0)
+class AutonomyProcess(Process):
+    def run(self): 
+        drive = TextDrive() #Tank()  # or Rover()
+        #camera = Marker()
+        camera = DepthCamera()
+        try:
+            main(drive, camera)
+        finally:
+            print("shit")
+            drive.send_drive_data(0.0, 1.0, 1.0)
+    
+    def close(self): 
+        print("Closing...")
+        self.terminate()
+        super().close()
+        
