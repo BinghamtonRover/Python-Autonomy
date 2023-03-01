@@ -116,7 +116,7 @@ def main(drive, camera):
     camera.clean_up()
 
 if __name__ == "__main__":
-    drive = TextDrive() #Tank()  # or Rover()
+    drive = Tank()  # or Rover()
     #camera = Marker()
     camera = DepthCamera()
     try:

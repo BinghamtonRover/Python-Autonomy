@@ -22,10 +22,10 @@ class DepthCamera:
         self.dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
         self.parameters = cv2.aruco.DetectorParameters_create()
         
-        self.minY = 30
-        self.maxY = 450
-        self.target_mins_total = 3000.0
-        self.zero_limit = 140000
+        self.minY = 140
+        self.maxY = 280
+        self.target_mins_total = 500.0
+        self.zero_limit = 30000
 
     def get_distances(self, sections):
         frames = self.pipeline.wait_for_frames()

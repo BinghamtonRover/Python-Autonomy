@@ -24,6 +24,8 @@ class Tank:
 		if not self.gpio.connected:
 			print("Quitting because hardware is not available")
 			quit()
+		else:
+			print("Tank successfully initialized")
 
 
 	def send_drive_data(self, throttle, left, right):
