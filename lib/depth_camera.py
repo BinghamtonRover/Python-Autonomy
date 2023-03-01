@@ -24,8 +24,9 @@ class DepthCamera:
         
         self.minY = 140
         self.maxY = 280
-        self.target_mins_total = 500.0
-        self.zero_limit = 30000
+        self.target_mins_total = 500.0  # or 200
+        self.zero_limit = 30000  # or 50,000
+
 
     def get_distances(self, sections):
         frames = self.pipeline.wait_for_frames()
