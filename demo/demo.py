@@ -80,6 +80,6 @@ if __name__ == "__main__":
     drive = Rover()
     try:
         drive.send_drive_data(0.01, 0.0, 0.0)
-        # main(drive)
+        main(drive)
     finally:
         drive.send_drive_data(0.0, 0.0, 0.0)

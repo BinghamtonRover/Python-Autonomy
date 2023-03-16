@@ -22,8 +22,6 @@ class Rover:
 	def send_drive_data(self, throttle = THROTTLE_DEFAULT, left = LEFT_DEFAULT, right = RIGHT_DEFAULT):
 		command = DriveCommand()
 		command.throttle = throttle
-		command.left = None
-		command.right = None
 		self.messenger.send_message(command, ROVER_ADDRESS, ROVER_PORT)
 
 		command = DriveCommand()
