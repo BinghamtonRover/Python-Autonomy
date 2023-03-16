@@ -32,10 +32,9 @@ def initialize_marker_detection():
     parameters = cv2.aruco.DetectorParameters_create()
 
     # usb camera
-    #vid_stream = VideoStream(src=0).start()
+    vid_stream = VideoStream(src=0).start()
     # realsense camera
-    vid_stream = VideoStream(src=4).start()
-    time.sleep(2.0)
+    #vid_stream = VideoStream(src=4).start()
 
     marker_dict = {
         0: "Start",
