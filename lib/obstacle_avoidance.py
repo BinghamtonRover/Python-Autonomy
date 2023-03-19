@@ -28,8 +28,8 @@ class ObstacleDetectionCamera:
         self.maxY = 460
         self.cutoff_dist = cutoff_dist
         self.max_zeroes = max_zeroes
-        self.block_height = 10
-        self.min_slope = min_slope
+        self.block_height = 8
+        self.a = 0.055 # I found this to be about 0.05
 
     def get_distances(self, sections):
         frames = self.pipeline.wait_for_frames()
@@ -46,6 +46,9 @@ class ObstacleDetectionCamera:
             previous_row_blocked = False
             previous_row_distance = -1.0
             horizontal_section_minimum =(horizontal_section * block_width)
+            
+            sum_of_first_two_vertical_sections = 0.0
+            
             for vertical_section in range(int((self.maxY - self.minY) / self.block_height) - 1, -1, -1):
                 vertical_section_minimum = (vertical_section * self.block_height) + self.minY
                 section_values = []
@@ -71,34 +74,31 @@ class ObstacleDetectionCamera:
                     row_dist = 0.0
                     if not len(section_values) == 0:
                         row_dist = mean(section_values)
+                    if vertical_section == 39 or vertical_section == 38:
+                        sum_of_first_two_vertical_sections += row_dist
                     previous_row_distance = row_dist
-                    
-                    #if horizontal_section == 4:
-                    #    print("########")
-                    #    print(horizontal_section_minimum)
-                    #    print(horizontal_section_minimum + block_width)
-                    #    print(row_dist)
                 else:
                     previous_row_blocked = False
                     row_dist = 0.0                
                     if not len(section_values) == 0:
                         row_dist = mean(section_values)
-                        
-                    #if horizontal_section == 4:
-                    #    print(row_dist)
-                        
-                    if row_dist > self.cutoff_dist:
-                        cutoff_reached = True
-                    elif previous_row_distance - row_dist > self.min_slope:
-                        previous_row_distance = row_dist
-                        continue
+                    if vertical_section == 39 or vertical_section == 38:
+                        sum_of_first_two_vertical_sections += row_dist
                     else:
-                        already_appended = True
-                        current_distances.append(row_dist)
-                        x = self.camera_width + 1
-                        y = self.camera_height + 1
-                        vertical_section = -1
-                        break
+                        b = (0.075 * sum_of_first_two_vertical_sections) + 1.0
+                        min_slope = - (self.a / ((self.a + b) * (self.a + b))) # we ball :)
+                        if row_dist > self.cutoff_dist:
+                            cutoff_reached = True
+                        elif previous_row_distance - row_dist < min_slope:
+                            previous_row_distance = row_dist
+                            continue
+                        else:
+                            already_appended = True
+                            current_distances.append(row_dist)
+                            x = self.camera_width + 1
+                            y = self.camera_height + 1
+                            vertical_section = -1
+                            break
             if not already_appended and len(current_distances) < sections:
                 current_distances.append(-1.0)
         return current_distances
