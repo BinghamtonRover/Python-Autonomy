@@ -3,7 +3,7 @@ import sys
 from lib.marker import Marker
 import socket
 from lib.tank import Tank
-from lib.autonomy_drive import AutonomyRover
+from lib.autonomy_drive import Rover
 
 def main(drive, camera):
     #values to play around with
@@ -73,7 +73,8 @@ def main(drive, camera):
     camera.clean_up()
 
 if __name__ == "__main__":
-    drive = Tank()  # or Rover()
+    # drive = Tank()
+    drive = Rover()
     camera = Marker()
     try:
         main(drive, camera)
