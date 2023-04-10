@@ -1,5 +1,5 @@
-from lib.network import ProtoServer
-from lib.network.generated.Protobuf.autonomy_pb2 import *
+from networking import ProtoServer
+from networking.generated.Protobuf.autonomy_pb2 import *
 from bin.demo3 import AutonomyProcess
 
 process = None
