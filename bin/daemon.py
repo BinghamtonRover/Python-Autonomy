@@ -1,11 +1,11 @@
-from lib.network import ProtoServer
-from lib.network.generated.Protobuf.autonomy_pb2 import *
+from network import ProtoSocket, Device
+from network.src.generated.Protobuf.autonomy_pb2 import *
 from bin.demo3 import AutonomyProcess
 
 process = None
 
-class AutonomyServer(ProtoServer): 
-	def on_message(self, message, source): 
+class AutonomyServer(ProtoSocket): 
+	def on_message(self, message, source):  # override 
 		if (message.name == "AutonomyCommand"): 
 			command = AutonomyCommand.FromString(message.data)
 			if (command.enable): enable_autonomy()
@@ -28,5 +28,5 @@ def disable_autonomy():
 	process = None
 	
 
-server = AutonomyServer(port=8006)
-server.start()
+server = AutonomyServer(port=8003, device=Device.AUTONOMY)
+server.listen()
