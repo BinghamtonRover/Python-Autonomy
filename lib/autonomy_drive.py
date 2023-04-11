@@ -18,30 +18,6 @@ ROVER_PORT = 8003
 class Rover:
 	def __init__(self):
 		self.socket = ProtoSocket(port=8004, destination=(ROVER_ADDRESS, ROVER_PORT), device=Device.AUTONOMY)
-	
-	def send_drive_data(self, throttle = THROTTLE_DEFAULT, left = LEFT_DEFAULT, right = RIGHT_DEFAULT):
-		command = DriveCommand()
-		command.throttle = throttle
-		self.socket.send_message(command, ROVER_ADDRESS, ROVER_PORT)
-
-		command = DriveCommand()
-		command.left = left
-		self.socket.send_message(command, ROVER_ADDRESS, ROVER_PORT)
-
-		command = DriveCommand()
-		command.right = right
-		self.socket.send_message(command, ROVER_ADDRESS, ROVER_PORT)
-
-	def adjust_throttle(self, throttle = THROTTLE_DEFAULT):
-		command = DriveCommand()
-		command.throttle = throttle
-		self.socket.send_message(command, ROVER_ADDRESS, ROVER_PORT)
-
-	def adjust_speed(self, left, right):
-		command = DriveCommand()
-		command.right = right
-		command.left = left
-		self.socket.send_message(command, ROVER_ADDRESS, ROVER_PORT)
 
 	def send_compass_data(self, direction):
 		pass
