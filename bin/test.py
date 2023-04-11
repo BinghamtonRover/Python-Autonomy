@@ -1,5 +1,5 @@
-from networking import ProtoClient
-from networking.generated.Protobuf.autonomy_pb2 import *
+from Networking import ProtoClient
+from Networking.generated.Protobuf.autonomy_pb2 import *
 
 import time
 
