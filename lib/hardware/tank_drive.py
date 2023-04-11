@@ -22,6 +22,12 @@ VEL_MED_POS = 5.0
 
 class TankDrive: 
 	def __init__(self): 
+		self.gpio = pigpio.pi()
+		if self.gpio.connected:
+			print("Tank successfully initialized")
+		else:
+			print("[Error] PiGPIO is not running")
+			quit()
 		self.throttle = 0
 		self.left_velocity = 0
 		self.right_velocity = 0
