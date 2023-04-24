@@ -1,4 +1,4 @@
-import osc_decoder
+from lib.imu.osc_decoder import *
 import socket
 import time
 import threading
@@ -30,10 +30,14 @@ class Imu:
 
         self.send_socket.sendto(bytes("/identify\0\0\0,\0\0\0", "utf-8"), ("192.168.1.232", 9000))
 
+        self.thread_active = True
         self._start_reading_thread()
 
+    def __del__(self):
+        self.stop_reading()
+
     def _start_reading_thread(self):
-        reading_thread = threading.Thread(target = self.read_imu, args = ())
+        reading_thread = threading.Thread(target = self._read_imu, args = ())
         reading_thread.start()
 
     #set values
@@ -44,7 +48,7 @@ class Imu:
 
         self.x = message[2]
         self.y = message[3]
-        self.z = (message[4] + 231.0) % 360.0
+        self.z = (message[4])
 
 
     def get_orientation(self):
@@ -62,16 +66,20 @@ class Imu:
 
         return (self.x, self.y, self.z)
 
-    def read_imu(self):
-        while True:
+    def stop_reading(self):
+        self.thread_active = False
+
+    def _read_imu(self):
+        while self.thread_active:
             for udp_socket in self.receive_sockets:
                 try:
                     data, addr = udp_socket.recvfrom(2048)
                 except socket.error: pass
                 else:
-                    for message in osc_decoder.decode(data):
+                    for message in decode(data):
                         # print(udp_socket.getsockname(), message)
                         # print(message)
                         self._handle_message(message)
+        print("stopped reading")
 
 
