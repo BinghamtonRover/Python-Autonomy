@@ -15,11 +15,11 @@ class Drive:
 		self.socket = socket
 
 	def set_throttle(self, throttle): 
-		print(f"Setting throttle to {throttle}")
+		#print(f"Setting throttle to {throttle}")
 		command = DriveCommand(set_throttle=True, throttle=throttle)
 		self.socket.send_message(command)
 
 	def set_speeds(self, left, right): 
-		print(f"Setting left={left}, right={right}")
+		#print(f"Setting left={left}, right={right}")
 		command = DriveCommand(set_left=True, left=left, set_right=True, right=right)
 		self.socket.send_message(command)

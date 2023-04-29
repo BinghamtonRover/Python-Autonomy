@@ -43,30 +43,19 @@ class Pathfinding:
         # read data
         self._read_data()
 
-        print("start")
-        print(self.current_position)
-        print()
-        print("goal")
-        print(self.gps_goal)
-        print()
-
         # calculate the path and target direction
         path = self._a_star(lambda a, b : (abs(b[0] - a[0]) + abs(b[1] - a[1])))
-        dir = (self._get_direction(path)) * (180.0 / (math.pi))
-        print(path)
-
-        # output target direction (rotation needed to point in target direction)
-        if dir < 0.0:
-            dir += 360.0
-        target_direction = dir - self.compass_direction
-        if target_direction < 0.0:
-            target_direction += 360.0
+        target = self.get_target_node(path)
+        # print(path)
         
-        # output target direction
-        return target_direction
+        # output target direction and target location
+        return target
 
     def is_at_goal(self):
-        return (self.current_position == self._gps_to_grid(self.target_gps_coords))
+        target_node = self._gps_to_grid(self.target_gps_coords)
+        adj = self._get_adjacent_nodes_with_corners(target_node))
+        adj.append(target_node)
+        return self.current_position in adj
 
     def _read_data(self):
         # read gps, compass, and camera data
@@ -79,7 +68,7 @@ class Pathfinding:
     def _read_gps(self):
         gps_vals = []
         gps_reading = self.gps_reader.read_gps()
-        while len(gps_vals) < 25:
+        while len(gps_vals) < 10:
             if gps_reading not in gps_vals:
                 gps_vals.append(gps_reading)
             gps_reading = self.gps_reader.read_gps()
@@ -99,6 +88,10 @@ class Pathfinding:
         x = round((cords[0] - self.gps_base[0]) / self.latitude_longitude_granularity)
         y = round((cords[1] - self.gps_base[1]) / self.latitude_longitude_granularity)
         return (x, y)
+    def _grid_to_gps(self, cords):
+        x = (cords[0] * self.latitude_longitude_granularity) + self.gps_base[0]
+        y = (cords[1] * self.latitude_longitude_granularity) + self.gps_base[1]
+        return (x, y)
 
     # update areas that are blocked based on camera data
     def _update_blocked_areas(self):
@@ -113,8 +106,8 @@ class Pathfinding:
                 if not (blocked_x == self.current_position[0] and blocked_y == self.current_position[1]) and not self._set_contains((blocked_x, blocked_y), self.is_blocked):
                     self.is_blocked.add(blocked_x, blocked_y)
 
-    # take a path found from a-star and return a direction to move
-    def _get_direction(self, path):
+    # take a path found from a-star and return the target node in gps cords
+    def get_target_node(self, path):
         x_delta = 0
         y_delta = 0
 
@@ -131,9 +124,13 @@ class Pathfinding:
                 elif (node[1] < self.current_position[1]):
                     y_delta = -1
             if (self._set_contains((node[0], node[1] - y_delta), self.is_blocked) or self._set_contains((node[0] - x_delta, node[1]), self.is_blocked)):
-                return math.atan2(prev_node[1] - self.current_position[1], prev_node[0] - self.current_position[0])
+                return self._grid_to_gps(prev_node)
             prev_node = node
-        return math.atan2(self.gps_goal[1] - self.current_position[1], self.gps_goal[0] - self.current_position[0])
+        return self._grid_to_gps(self.gps_goal)
+
+    # take a target position and current position and calculate the direction to reach the target direction
+    def get_direction(self, current_position, target):
+        return (math.atan2(-current_position[1] + target[1], -current_position[0] + target[0]) * (180.0 / math.pi)) % 360.0
 
     # a star
     def _a_star(self, h_func):
@@ -187,6 +184,16 @@ class Pathfinding:
             (node[0], node[1] - 1),
             (node[0] + 1, node[1]),
             (node[0] - 1, node[1])]
+
+    def _get_adjacent_nodes_with_corners(self, node):
+        return [(node[0], node[1] + 1),
+            (node[0], node[1] - 1),
+            (node[0] + 1, node[1]),
+            (node[0] - 1, node[1]),
+            (node[0] + 1, node[1] + 1),
+            (node[0] + 1, node[1] - 1),
+            (node[0] - 1, node[1] + 1),
+            (node[0] - 1, node[1] - 1)]
 
     def _set_contains(self, val, set):
         return val in set
