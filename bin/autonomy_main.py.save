@@ -14,10 +14,11 @@ def main(drive, gps, imu, camera):
     while gps.read_gps()[0] == 0:
         pass
     print("gps ready")
-    while imu.get_orientation()[2] == 0:
-        pass
+    #while imu.get_orientation()[2] == 0:
+    #    pass
     print("imu ready")
-    pathfinding = Pathfinding(gps, imu, camera, (42.08751, -75.96707650))
+    pathfinding = Pathfinding(gps, imu, camera, (42.08770216, -75.9673
+
     while (not pathfinding.is_at_goal()):
         print("running pathfinding")
         #print(imu.get_orientation()[2] % 360.0)
@@ -26,12 +27,12 @@ def main(drive, gps, imu, camera):
         current_direction = imu.get_orientation()[2] % 360.0
         start_point = gps.read_gps()
         target_direction = pathfinding.get_direction(start_point, target_cords)
-        print(target_direction)
         while not pathfinding.rotational_equality(target_direction, current_direction):
             adjust_to_face_target_direction(drive, target_direction, current_direction)
             current_direction = imu.get_orientation()[2] % 360.0
         drive.set_speeds(speed1, speed1)
         gps_pos = gps.read_gps()
+        print("going to target")
         while not reached_point(start_point, target_cords, gps_pos): # and not is_blocked
             #print(math.pow(target_cords[0] - gps_pos[0], 2) + math.pow(target_cords[1] - gps_pos[1], 2))
             gps_pos = gps.read_gps()
