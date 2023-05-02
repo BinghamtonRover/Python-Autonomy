@@ -79,7 +79,7 @@ class Pathfinding:
         return self.imu_reader.get_orientation()[2]
 
     # read camera
-    def _read_camera(self):
+    def _read_camera(self):z
         return 24 * [-1.0]
         #return self.camera.get_distances(24)
 
@@ -93,18 +93,24 @@ class Pathfinding:
         y = (cords[1] * self.latitude_longitude_granularity) + self.gps_base[1]
         return (x, y)
 
-    # update areas that are blocked based on camera data
+    # update areas that are blocked based on camera data by computing the coordinates where obstacles are located
     def _update_blocked_areas(self):
         depth_data_length = float(len(self.camera_data))
         index = 0.0
         for depth in self.camera_data:
             if depth <= self.blocking_depth_threshold and depth != -1.0:
-                offset_angle = ((self.camera_horizontal_fov / (2.0 * depth_data_length)) * ((2 * index) + 1)) - (self.camera_horizontal_fov / 2.0)
-                exact_angle = (self.compass_direction + offset_angle) % 360.0
-                blocked_x = round(self.current_position[0] + (depth * math.sin((180.0 / math.pi) * exact_angle)))
-                blocked_y = round(self.current_position[1] + (depth * math.cos((180.0 / math.pi) * exact_angle)))
-                if not (blocked_x == self.current_position[0] and blocked_y == self.current_position[1]) and not self._set_contains((blocked_x, blocked_y), self.is_blocked):
-                    self.is_blocked.add(blocked_x, blocked_y)
+                center_angle = ((self.camera_horizontal_fov / (2.0 * depth_data_length)) * ((2.0 * index) + 1)) - (self.camera_horizontal_fov / 2.0)
+                angle1 = (center_angle + (self.camera_horizontal_fov / (2.0 * depth_data_length)) + self.compass_direction) % 360.0
+                angle2 = (center_angle - (self.camera_horizontal_fov / (2.0 * depth_data_length)) + self.compass_direction) % 360.0
+                point_dist = depth / (math.cos(abs(center_angle - angle1) * (math.pi / 180.0)))
+                angle1 *= (math.pi / 180.0)
+                angle2 *= (math.pi / 180.0)
+                point1 = (self.current_position[0] + point_dist * math.cos(angle1), self.current_position[1] + point_dist * math.sin(angle1))
+                point2 = (self.current_position[0] + point_dist * math.cos(angle2), self.current_position[1] + point_dist * math.sin(angle2))
+                to_be_blocked = self._bresenhams_line_floating_point(point1, point2)
+                for p in to_be_blocked:
+                    self.is_blocked.add(p)
+            index += 1
 
     # take a path found from a-star and return the target node in gps cords
     def get_target_node(self, path):
@@ -132,9 +138,8 @@ class Pathfinding:
     def get_direction(self, current_position, target):
         return (math.atan2(-current_position[1] + target[1], -current_position[0] + target[0]) * (180.0 / math.pi)) % 360.0
 
-    # a star
+    # a star (explanation here: https://www.geeksforgeeks.org/a-search-algorithm/)
     def _a_star(self, h_func):
-        #start_time = time.time()
         open_queue = PriorityQueue()
         closed_nodes = set([])
         parent = {}
@@ -198,9 +203,25 @@ class Pathfinding:
     def _set_contains(self, val, set):
         return val in set
 
+    # given two points, create a continuous line of discrete points (integer pairs) from start to end
+    def _bresenhams_line_floating_point(self, start, end):
+        if start == end:
+            return [(math.floor(start[0]), math.floor(start[1]))]
+        line = []
+        difX = end[0] - start[0]
+        difY = end[1] - start[1]
+        dist = abs(difX) + abs(difY)
+        dx = difX / dist
+        dy = difY / dist
+        for i in range(0, math.ceil(dist) + 1):
+            x = math.floor(start[0] + dx * i)
+            y = math.floor(start[1] + dy * i)
+            line.append((x, y))
+        return list(dict.fromkeys(line))
+
     def rotational_equality(self, a, b):
         print(((a - b) % 360))
-        return ((a - b) % 360.0 < 10.0)
+        return ((a - b) % 360.0 < 3.0)
 
     def location_equality(self, a, b):
         return (self._gps_to_grid(a) == self._gps_to_grid(b))
