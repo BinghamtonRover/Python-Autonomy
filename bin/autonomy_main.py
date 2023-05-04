@@ -2,19 +2,12 @@ from lib.pathfinding import Pathfinding
 from lib.imu.imu import Imu
 from lib.gps_reader import GPSReader
 from lib.hardware.temp_tank_drive import Drive
-from lib.quick_obstacle_avoidance import ObstacleAvoidanceCamera
+from lib.quick_obstacle_avoidance import ObstacleDetectionCamera
 #from network import ProtoSocket, Device
 import time
 import math
 
 def main(drive, gps, imu, camera):
-    while True:
-        if (not camera.is_blocked()):
-            drive.set_speeds(0.8, 0.8)
-        else:
-            drive.set_sppeds(0.0, 0.0)
-
-
     drive.set_speeds(0.0, 0.0)
     speed1 = 0.8
     print("starting")
@@ -97,7 +90,7 @@ if __name__ == "__main__":
     imu = Imu()
 
     print("Setting up camera...")
-    camera = ObstacleAvoidanceCamera() #camera = DepthCamera()
+    camera = ObstacleDetectionCamera(0, 0, 0) #camera = DepthCamera()
 
     print("Starting main")
     try:
@@ -105,8 +98,8 @@ if __name__ == "__main__":
     finally:
         print("shit")
         drive.set_speeds(0.0, 0.0)
-        gps.stop_reading()
-        imu.stop_reading()
+        #gps.stop_reading()
+        #imu.stop_reading()
         time.sleep(2)
 
 """

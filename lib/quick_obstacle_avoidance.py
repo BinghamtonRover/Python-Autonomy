@@ -1,6 +1,7 @@
 import pyrealsense2 as rs
 import bisect
 from statistics import mean
+from statistics import median
 import cv2
 import numpy as np
 import imutils
@@ -67,17 +68,28 @@ class ObstacleDetectionCamera:
         out = []
         for i in l:
             if i == -1.0:
-                out.append(10.0)
-            else:
+                out.append(20.0)
+            elif i != 0.0:
                 out.append(i)
+        return out
+
+    def _get_smaller_half(self, l):
+        med = median(l)
+        out = []
+        for i in l:
+            if i <= med and i != 0:
+                out.append(i)
+        if len(out) == 0:
+            return [0]
+        print(out)
         return out
 
     def is_blocked(self):
         d = self.get_distances(64)
         if len(d) == 0:
             return False
-        print(mean(self._unblocked_to_large(d[16:48])))
-        return (mean(self._unblocked_to_large(d[16:48])) < 2.0)
+        #print(mean(self._get_smaller_half(self._unblocked_to_large(d[20:44]))))
+        return (mean(self._get_smaller_half(self._unblocked_to_large(d[20:44]))) < 0.8)
 
     def read_markers(self):
         # Get frame from camera

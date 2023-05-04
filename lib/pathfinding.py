@@ -13,7 +13,7 @@ class Pathfinding:
         # create readers
         self.gps_reader = gps_reader
         self.imu_reader = imu_reader
-        #self.camera = camera ObstacleDetectionCamera(2.4, 240, -0.3)
+        self.camera = camera #ObstacleDetectionCamera(2.4, 240, -0.3)
 
         # grid info
         self.gps_base = target_gps_coords
@@ -21,7 +21,7 @@ class Pathfinding:
         self.goal_reached = False
 
         # 0.00001 is about 1.11 meters (depending on the latitude)
-        self.latitude_longitude_granularity = 0.00003
+        self.latitude_longitude_granularity = 0.000004
 
         # data from async methods
         self.is_blocked = set([])
@@ -35,17 +35,30 @@ class Pathfinding:
         self.target_gps_coords = target_gps_coords
 
         # visual processing data
-        self.blocking_depth_threshold = 5
+        self.blocking_depth_threshold = 2.0
         self.camera_horizontal_fov = 87
+
+    def _put_behind(self):
+        if self.compass_direction < 45.0 or self.compass_direction > 315.0:
+            self.current_position = (self.current_position[0] - latitude_longitude_granularity, self.current_position[1])
+        elif self.compass_direction < 135.0:
+            self.current_position = (self.current_position[0], self.current_position[1] + latitude_longitude_granularity)
+        elif self.compass_direction < 225.0:
+            self.current_position = (self.current_position[0] + latitude_longitude_granularity, self.current_position[1])
+        else:
+            self.current_position = (self.current_position[0], self.current_position[1] + latitude_longitude_granularity)
 
     def pathfinding(self):
         # read data
         self._read_data()
+        while (self._set_contains(self._gps_to_grid(self.current_position), self.is_blocked)):
+            self._put_behind()
 
         # calculate the path and target direction
         path = self._a_star(lambda a, b : (abs(b[0] - a[0]) + abs(b[1] - a[1])))
         target = self.get_target_node(path)
         # print(path)
+        print(self.is_blocked)
         
         # output target direction and target location
         return target
@@ -65,14 +78,14 @@ class Pathfinding:
 
     # read gps coordinates
     def _read_gps(self):
-        #return self.gps_reader.read_gps()
-        gps_vals = []
-        gps_reading = self.gps_reader.read_gps()
-        while len(gps_vals) < 16:
-            if gps_reading not in gps_vals:
-                gps_vals.append(gps_reading)
-            gps_reading = self.gps_reader.read_gps()
-        return (statistics.mean(map(lambda a : a[0], gps_vals)), statistics.mean(map(lambda a : a[1], gps_vals)))
+        return self.gps_reader.read_gps()
+        #gps_vals = []
+        #gps_reading = self.gps_reader.read_gps()
+        #while len(gps_vals) < 16:
+        #    if gps_reading not in gps_vals:
+        #        gps_vals.append(gps_reading)
+        #    gps_reading = self.gps_reader.read_gps()
+        #return (statistics.mean(map(lambda a : a[0], gps_vals)), statistics.mean(map(lambda a : a[1], gps_vals)))
 
     # read compass direction
     def _read_compass(self):
@@ -80,8 +93,8 @@ class Pathfinding:
 
     # read camera
     def _read_camera(self):
-        return 24 * [-1.0]
-        #return self.camera.get_distances(24)
+        #return 24 * [-1.0]
+        return self.camera.get_distances(64)
 
     # convert gps coordinates to grid coordinates
     def _gps_to_grid(self, cords):
