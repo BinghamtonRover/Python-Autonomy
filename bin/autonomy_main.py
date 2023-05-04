@@ -2,11 +2,19 @@ from lib.pathfinding import Pathfinding
 from lib.imu.imu import Imu
 from lib.gps_reader import GPSReader
 from lib.hardware.temp_tank_drive import Drive
+from lib.quick_obstacle_avoidance import ObstacleAvoidanceCamera
 #from network import ProtoSocket, Device
 import time
 import math
 
 def main(drive, gps, imu, camera):
+    while True:
+        if (not camera.is_blocked()):
+            drive.set_speeds(0.8, 0.8)
+        else:
+            drive.set_sppeds(0.0, 0.0)
+
+
     drive.set_speeds(0.0, 0.0)
     speed1 = 0.8
     print("starting")
@@ -32,7 +40,7 @@ def main(drive, gps, imu, camera):
             current_direction = imu.get_orientation()[2] % 360.0
         drive.set_speeds(speed1, speed1)
         gps_pos = gps.read_gps()
-        while not reached_point(start_point, target_cords, gps_pos): # and not is_blocked
+        while not reached_point(start_point, target_cords, gps_pos) and not camera.is_blocked():
             #print(math.pow(target_cords[0] - gps_pos[0], 2) + math.pow(target_cords[1] - gps_pos[1], 2))
             gps_pos = gps.read_gps()
             target_direction = pathfinding.get_direction(gps_pos, target_cords)
@@ -89,7 +97,7 @@ if __name__ == "__main__":
     imu = Imu()
 
     print("Setting up camera...")
-    camera = None #camera = DepthCamera()
+    camera = ObstacleAvoidanceCamera() #camera = DepthCamera()
 
     print("Starting main")
     try:

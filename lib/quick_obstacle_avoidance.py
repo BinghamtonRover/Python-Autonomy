@@ -4,6 +4,7 @@ from statistics import mean
 import cv2
 import numpy as np
 import imutils
+import time
 
 class ObstacleDetectionCamera:
     def __init__(self, cutoff_dist, max_zeroes, min_slope):
@@ -19,40 +20,64 @@ class ObstacleDetectionCamera:
 
         # Start streaming
         self.pipeline.start(self.config)
-        
+
         # cv2
         self.dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
         self.parameters = cv2.aruco.DetectorParameters_create()
-        
+
         self.minY = 140                 # lower frame cutoff
         self.maxY = 460                 # upper frame cutoff
 
     # returns an array of distance to an object on each horizontal section of the frame, with -1.0 being unblocked
     def get_distances(self, sections):
-        while True:
-            # read depth frame
-            frames = self.pipeline.wait_for_frames()
-            depth = frames.get_depth_frame()
-            #if not depth:
-                
-            if depth:
-                # loop through, but only look at certain rows
-                current_distances = [0] * 64
-                for y in range(140, 180):
-                    if y % 20 is 19 and len(current_distances) == 0:
-                        for x in range(640):
-                            dist = depth.get_distance(x, y)
-                            if 0 < dist and dist < 1:
-                                current_distances[x//10] += 1
+        # read depth frame
+        frames = self.pipeline.wait_for_frames()
+        depth = frames.get_depth_frame()
 
-                out = ""
-                for i in current_distances:
-                    if i < 10:
-                        out += " "
+        if depth:
+            # loop through, but only look at certain rows
+            current_distances = []
+            for i in range(64):
+                current_distances.append([])
+            #for y in range(140, 180):
+            y = 140
+            if True:
+                #if y % 20 is 19 and len(current_distances) == 0:
+                for x in range(640):
+                    dist = depth.get_distance(x, y)
+                    if dist > 0:
+                        l = current_distances[x//10]
+                        l.append(dist)
+                        current_distances[x//10] = l
+            out = []
+            for i in current_distances:
+                if len(i) == 0:
+                    out.append(0.0)
+                else:
+                    m = mean(i)
+                    if m <= 5:
+                        out.append(m)
                     else:
-                        out += "A"
+                        out.append(-1.0)
+            return out
+        else:
+            return []
 
-                print(out)
+    def _unblocked_to_large(self, l):
+        out = []
+        for i in l:
+            if i == -1.0:
+                out.append(10.0)
+            else:
+                out.append(i)
+        return out
+
+    def is_blocked(self):
+        d = self.get_distances(64)
+        if len(d) == 0:
+            return False
+        print(mean(self._unblocked_to_large(d[16:48])))
+        return (mean(self._unblocked_to_large(d[16:48])) < 2.0)
 
     def read_markers(self):
         # Get frame from camera
