@@ -1,7 +1,7 @@
 import pigpio
 import time
 
-from network.src.generated.Protobuf.drive_pb2 import DriveCommand
+from network.generated import DriveCommand
 
 LEFT_MOTOR_PIN = 13
 RIGHT_MOTOR_PIN = 12
@@ -55,3 +55,8 @@ class TankDrive:
             if (velocity < VEL_MAX_NEG): velocity = VEL_MAX_NEG
             pwm = (PWM_MIN_NEG + velocity * (PWM_MAX_NEG - PWM_MIN_NEG) / (VEL_MAX_NEG - VEL_ZERO))
         self.gpio.hardware_PWM(pin, PWM_FREQUENCY, int(pwm))
+
+    def set_throttle(self, throttle):
+        self.throttle = throttle
+        self.update_motors()
+
