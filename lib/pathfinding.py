@@ -116,8 +116,8 @@ class Pathfinding:
                 angle1 = (center_angle + (self.camera_horizontal_fov / (2.0 * depth_data_length)) + self.compass_direction) % 360.0
                 angle2 = (center_angle - (self.camera_horizontal_fov / (2.0 * depth_data_length)) + self.compass_direction) % 360.0
                 point_dist = depth / (math.cos(abs(center_angle - angle1) * (math.pi / 180.0)))
-                angle1 *= (math.pi / 180.0)
-                angle2 *= (math.pi / 180.0)
+                angle1 *= -(math.pi / 180.0)
+                angle2 *= -(math.pi / 180.0)
                 point1 = (self.current_position[0] + point_dist * math.cos(angle1), self.current_position[1] + point_dist * math.sin(angle1))
                 point2 = (self.current_position[0] + point_dist * math.cos(angle2), self.current_position[1] + point_dist * math.sin(angle2))
                 to_be_blocked = self._bresenhams_line_floating_point(point1, point2)
@@ -129,7 +129,6 @@ class Pathfinding:
     def get_target_node(self, path):
         x_delta = 0
         y_delta = 0
-
         prev_node = self.current_position
         for node in path:
             if x_delta == 0:
