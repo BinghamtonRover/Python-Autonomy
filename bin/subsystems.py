@@ -1,9 +1,9 @@
 from network import ProtoSocket, Device
-from network.src.generated.Protobuf.drive_pb2 import DriveCommand
+from network.generated import DriveCommand
 from lib.hardware.tank_drive import TankDrive
 
 SUBSYSTEMS_PORT = 8001
-AUTONOMY_PORT = 8003
+AUTONOMY_PORT = 8004
 
 class TankSubsystems(ProtoSocket):
 	def __init__(self): 
