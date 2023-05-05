@@ -20,4 +20,11 @@ class TankSubsystems(ProtoSocket):
 
 if __name__ == "__main__": 
 	server = TankSubsystems()
-	server.listen()
+	try: 
+		while True: 
+			try: server.listen()
+			except KeyboardInterrupt: break
+			except OSError as error: 
+				if error.errno == 10054: continue
+				else: raise error
+	finally: server.close()

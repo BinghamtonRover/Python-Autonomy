@@ -41,8 +41,8 @@ class TankDrive:
     def update_motors(self): 
         # Writes commands to the ESC
         #print(f"Writing throttle={self.throttle}, left={self.left_velocity}, right={self.right_velocity}")
-        self.set_velocity(LEFT_MOTOR_PIN, self.left_velocity)
-        self.set_velocity(RIGHT_MOTOR_PIN, self.right_velocity)
+        self.set_velocity(LEFT_MOTOR_PIN, self.left_velocity * self.throttle)
+        self.set_velocity(RIGHT_MOTOR_PIN, self.right_velocity * self.throttle)
 
     def set_velocity(self, pin, velocity): 
         velocity = -velocity
