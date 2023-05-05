@@ -11,7 +11,8 @@ class TankSubsystems(ProtoSocket):
 		super().__init__(port=SUBSYSTEMS_PORT, device=Device.SUBSYSTEMS)
 
 	def on_disconnect(self):  # overriden
-		self.drive.set_throttle(0)		
+		self.drive.set_throttle(0)	
+		super().on_disconnect()	
 
 	def on_message(self, wrapper):  # overriden
 		if wrapper.name == "DriveCommand":
