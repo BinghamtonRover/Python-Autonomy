@@ -24,21 +24,62 @@ class ObstacleDetectionCamera:
         self.dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
         self.parameters = cv2.aruco.DetectorParameters_create()
         
-        self.minY = 140                 # lower frame cutoff
-        self.maxY = 460                 # upper frame cutoff
+        # ((maxY - minY) % block_height) needs to equal 0
+        self.minY = 140                  # lower frame cutoff
+        self.maxY = 360                 # upper frame cutoff
         self.cutoff_dist = cutoff_dist  # (depth cutoff) maximum distance the camera will analyze
+        
         self.max_zeroes = max_zeroes    # max number of zeroes per section
-        self.block_height = 8           # height of sections the screen is separated into
-        self.a = 0.055                  # "a" value used in function to calculate maximum slope between blocks in frame, I found this to be about 0.05 through some tests
+        self.block_height = 10           # height of sections the screen is separated into
+        #self.a = 0.055                  # "a" value used in function to calculate maximum slope between blocks in frame, I found this to be about 0.05 through some tests
+        self.a = 0.03
+
+    def is_blocked(self):
+        return (self._is_blocked() and self._is_blocked() and self._is_blocked())
+
+    def _is_blocked(self):
+        dists = self._get_distances(20)
+        consecutive_blocked = 0
+        for d in dists[5:15]:
+            if d != -1.0 or d >= 1.1:
+                consecutive_blocked += 1
+                if consecutive_blocked == 5:
+                    return True
+            elif d != 0.0:
+                consecutive_blocked = 0
+        return False
+
+    def get_distances(self, sections):
+        l = []
+        for i in range(5):
+            l.append(self._get_distances(20))
+        dists = []
+        for i in range(len(l[i])):
+            row_dists = []
+            zeroes = 0
+            for j in range(len(l)):
+                x = l[j][i]
+                if x == 0.0:
+                    zeroes += 1
+                elif x != -1.0:
+                    row_dists.append(l[j][i])
+            if zeroes >= 3:
+                dists.append(0.0)
+            elif len(row_dists) <= 2:
+                dists.append(-1.0)
+            else:
+                dists.append(mean(row_dists))
+        return dists
 
     # returns an array of distance to an object on each horizontal section of the frame, with -1.0 being unblocked
-    def get_distances(self, sections):
+    # [sections] is the amount of columns to split the screen into
+    def _get_distances(self, sections:int) -> [int]:
         # read depth frame
         frames = self.pipeline.wait_for_frames()
         depth = frames.get_depth_frame()
         if not depth:
             return []
-        
+
         # width of sections to be analyzed
         block_width = int(self.camera_width / sections)
 
@@ -49,16 +90,16 @@ class ObstacleDetectionCamera:
         for horizontal_section in range(sections):
             already_appended = False
             previous_row_zeroed = False
+            cutoff_reached = False
             previous_row_distance = -1.0
             horizontal_section_minimum = (horizontal_section * block_width)
             sum_of_first_two_vertical_sections = 0.0
-            
+
             for vertical_section in range(int((self.maxY - self.minY) / self.block_height) - 1, -1, -1):
                 vertical_section_minimum = (vertical_section * self.block_height) + self.minY
-                cutoff_reached = False
 
                 # read data from a given section
-                section_info = self._read_section(depth, vertical_section_minimum, horizontal_section_minimum)
+                section_info = self._read_section(depth, vertical_section_minimum, horizontal_section_minimum, block_width)
                 zeroes = section_info[0]
                 section_values = section_info[1]
 
@@ -68,6 +109,7 @@ class ObstacleDetectionCamera:
                     if previous_row_zeroed:
                         current_distances.append(0.0)
                         already_appended = True
+                        previous_row_zeroed = False
                         break
                     else:
                         previous_row_zeroed = True
@@ -83,16 +125,15 @@ class ObstacleDetectionCamera:
 
                     # calculate "sum of first two vertical sections", which is used in the slope formula (we cannot use a row if it is "0.0")
                     sum_of_first_two_vertical_sections = previous_row_distance + row_dist
-
                     previous_row_distance = row_dist
-                
+
                 # check if slope between section of frames is too steep
                 else:
                     previous_row_zeroed = False
                     row_dist = self._safe_mean(section_values)
-                    
+
                     # don't check slope for first two vertical sections, we need these sections to calculate a value in or slope formula
-                    if vertical_section == 39 or vertical_section == 38:
+                    if vertical_section >= ((self.maxY - self.minY) / self.block_height) - 2:
                         sum_of_first_two_vertical_sections += row_dist
                     else:
                         # calculate min slope based on regression formula I found
@@ -117,7 +158,7 @@ class ObstacleDetectionCamera:
 
         # return an array of the distance to an "obstacle" in each horizontal section
         return current_distances
-    
+
     # calculate mean, if empty return 0.0
     def _safe_mean(self, section_values):
         if len(section_values) == 0:
@@ -126,11 +167,11 @@ class ObstacleDetectionCamera:
             return mean(section_values)
 
     # read section of frame
-    def _read_section(self, depth, minY, minX):
+    def _read_section(self, depth, minY, minX, block_width):
         section_values = []
         zeroes = 0
-        for y in range(minY, minY + self.block_height):
-            for x in range(minX, minX + block_width):
+        for y in range(minY, minY + self.block_height, 2):
+            for x in range(minX, minX + block_width, 2):
                 dist = depth.get_distance(x, y)
                 if dist == 0.0:
                     zeroes += 1

@@ -5,7 +5,7 @@ import time
 import threading
 import statistics
 from lib.gps_reader import GPSReader
-#from lib.obstacle_avoidance import ObstacleDetectionCamera
+from lib.obstacle_avoidance import ObstacleDetectionCamera
 from lib.imu.imu import Imu
 
 class Pathfinding:
@@ -21,7 +21,7 @@ class Pathfinding:
         self.goal_reached = False
 
         # 0.00001 is about 1.11 meters (depending on the latitude)
-        self.latitude_longitude_granularity = 0.000004
+        self.latitude_longitude_granularity = 0.00001
 
         # data from async methods
         self.is_blocked = set([])
@@ -35,7 +35,6 @@ class Pathfinding:
         self.target_gps_coords = target_gps_coords
 
         # visual processing data
-        self.blocking_depth_threshold = 2.0
         self.camera_horizontal_fov = 87
 
     def _put_behind(self):
@@ -58,6 +57,7 @@ class Pathfinding:
         path = self._a_star(lambda a, b : (abs(b[0] - a[0]) + abs(b[1] - a[1])))
         target = self.get_target_node(path)
         # print(path)
+        print(self.current_position)
         print(self.is_blocked)
         
         # output target direction and target location
@@ -79,13 +79,13 @@ class Pathfinding:
     # read gps coordinates
     def _read_gps(self):
         return self.gps_reader.read_gps()
-        #gps_vals = []
-        #gps_reading = self.gps_reader.read_gps()
-        #while len(gps_vals) < 16:
-        #    if gps_reading not in gps_vals:
-        #        gps_vals.append(gps_reading)
-        #    gps_reading = self.gps_reader.read_gps()
-        #return (statistics.mean(map(lambda a : a[0], gps_vals)), statistics.mean(map(lambda a : a[1], gps_vals)))
+        gps_vals = []
+        gps_reading = self.gps_reader.read_gps()
+        while len(gps_vals) < 20:
+            if gps_reading not in gps_vals:
+                gps_vals.append(gps_reading)
+            gps_reading = self.gps_reader.read_gps()
+        return (statistics.mean(map(lambda a : a[0], gps_vals)), statistics.mean(map(lambda a : a[1], gps_vals)))
 
     # read compass direction
     def _read_compass(self):
@@ -94,7 +94,7 @@ class Pathfinding:
     # read camera
     def _read_camera(self):
         #return 24 * [-1.0]
-        return self.camera.get_distances(64)
+        return self.camera.get_distances(20)
 
     # convert gps coordinates to grid coordinates
     def _gps_to_grid(self, cords):
@@ -109,9 +109,9 @@ class Pathfinding:
     # update areas that are blocked based on camera data by computing the coordinates where obstacles are located
     def _update_blocked_areas(self):
         depth_data_length = float(len(self.camera_data))
-        index = 0.0
-        for depth in self.camera_data:
-            if depth <= self.blocking_depth_threshold and depth != -1.0:
+        index = 2.0
+        for depth in self.camera_data[2:-2]:
+            if depth != -1.0 and depth != 0.0 and self.camera_data[int(index) - 1] != -1.0 and self.camera_data[int(index) + 1] != -1.0:
                 center_angle = ((self.camera_horizontal_fov / (2.0 * depth_data_length)) * ((2.0 * index) + 1)) - (self.camera_horizontal_fov / 2.0)
                 angle1 = (center_angle + (self.camera_horizontal_fov / (2.0 * depth_data_length)) + self.compass_direction) % 360.0
                 angle2 = (center_angle - (self.camera_horizontal_fov / (2.0 * depth_data_length)) + self.compass_direction) % 360.0

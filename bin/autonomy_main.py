@@ -2,7 +2,7 @@ from lib.pathfinding import Pathfinding
 from lib.imu.imu import Imu
 from lib.gps_reader import GPSReader
 from lib.hardware.temp_tank_drive import Drive
-from lib.quick_obstacle_avoidance import ObstacleDetectionCamera
+from lib.obstacle_avoidance import ObstacleDetectionCamera
 #from network import ProtoSocket, Device
 import time
 import math
@@ -18,7 +18,7 @@ def main(drive, gps, imu, camera):
     while imu.get_orientation()[2] == 0:
         pass
     print("imu ready")
-    pathfinding = Pathfinding(gps, imu, camera, (42.08751, -75.96707650))
+    pathfinding = Pathfinding(gps, imu, camera, (42.08744, -75.96739))
     while (not pathfinding.is_at_goal()):
         print("running pathfinding")
         #print(imu.get_orientation()[2] % 360.0)
@@ -27,7 +27,7 @@ def main(drive, gps, imu, camera):
         current_direction = imu.get_orientation()[2] % 360.0
         start_point = gps.read_gps()
         target_direction = pathfinding.get_direction(start_point, target_cords)
-        print(target_direction)
+        #print(target_direction)
         while not pathfinding.rotational_equality(target_direction, current_direction):
             adjust_to_face_target_direction(drive, target_direction, current_direction)
             current_direction = imu.get_orientation()[2] % 360.0
@@ -39,6 +39,8 @@ def main(drive, gps, imu, camera):
             target_direction = pathfinding.get_direction(gps_pos, target_cords)
             current_direction = imu.get_orientation()[2] % 360.0
             adjust_while_moving_to_target(drive, target_direction, current_direction)
+        print(reached_point(start_point, target_cords, gps_pos))
+        print(camera.is_blocked())
         drive.set_speeds(0.0, 0.0)
     print("at goal")
     drive.set_speed(0.0, 0.0)
@@ -90,7 +92,7 @@ if __name__ == "__main__":
     imu = Imu()
 
     print("Setting up camera...")
-    camera = ObstacleDetectionCamera(0, 0, 0) #camera = DepthCamera()
+    camera = ObstacleDetectionCamera(1.8, 240, -0.3) #camera = DepthCamera()
 
     print("Starting main")
     try:
