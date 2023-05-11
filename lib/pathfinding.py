@@ -71,13 +71,13 @@ class Pathfinding:
 
     def _read_data(self):
         # read gps, compass, and camera data
-        self.current_position = self._gps_to_grid(self._read_gps())
+        self.current_position = self._gps_to_grid(self.read_gps())
         self.compass_direction = self._read_compass()
         self.camera_data = self._read_camera()
         self._update_blocked_areas()
 
     # read gps coordinates
-    def _read_gps(self):
+    def read_gps(self):
         return self.gps_reader.read_gps()
         gps_vals = []
         gps_reading = self.gps_reader.read_gps()
