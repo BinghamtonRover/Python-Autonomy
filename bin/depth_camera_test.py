@@ -46,7 +46,7 @@ def main():
     #    print(camera.read_markers())
 
     while True:
-        print(camera.is_blocked())
+        #print(camera.is_blocked())
         print(camera.get_distances(20))
 
     while True:

@@ -20,6 +20,7 @@ def main(drive, gps, imu, camera):
         pass
     print("imu ready")
     pathfinding = Pathfinding(gps, imu, camera, (42.08744, -75.96739))
+    camera.get_distances(20)
     time.sleep(3.0)
 
     # go to gps location
@@ -99,7 +100,7 @@ def main(drive, gps, imu, camera):
     # drive between the two found positions
     drive.set_speeds(0.0, 0.0)
 
-def get_second_marker_info(camera_info, first_id)
+def get_second_marker_info(camera_info, first_id):
     for i in markers:
         if i[0] != first_id:
             return i
