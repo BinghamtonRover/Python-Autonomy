@@ -39,24 +39,25 @@ class Pathfinding:
 
     def _put_behind(self):
         if self.compass_direction < 45.0 or self.compass_direction > 315.0:
-            self.current_position = (self.current_position[0] - latitude_longitude_granularity, self.current_position[1])
+            self.current_position = (self.current_position[0] - 1, self.current_position[1])
         elif self.compass_direction < 135.0:
-            self.current_position = (self.current_position[0], self.current_position[1] + latitude_longitude_granularity)
+            self.current_position = (self.current_position[0], self.current_position[1] + 1)
         elif self.compass_direction < 225.0:
-            self.current_position = (self.current_position[0] + latitude_longitude_granularity, self.current_position[1])
+            self.current_position = (self.current_position[0] + 1, self.current_position[1])
         else:
-            self.current_position = (self.current_position[0], self.current_position[1] + latitude_longitude_granularity)
+            self.current_position = (self.current_position[0], self.current_position[1] - 1)
 
     def pathfinding(self):
         # read data
         self._read_data()
-        while (self._set_contains(self._gps_to_grid(self.current_position), self.is_blocked)):
+        while self._set_contains(self.current_position, self.is_blocked):
             self._put_behind()
 
         # calculate the path and target direction
         path = self._a_star(lambda a, b : (abs(b[0] - a[0]) + abs(b[1] - a[1])))
+        print(path)
         target = self.get_target_node(path)
-        # print(path)
+        print(self._gps_to_grid(target))
         print(self.current_position)
         print(self.is_blocked)
         
@@ -78,7 +79,7 @@ class Pathfinding:
 
     # read gps coordinates
     def read_gps(self):
-        return self.gps_reader.read_gps()
+        #return self.gps_reader.read_gps()
         gps_vals = []
         gps_reading = self.gps_reader.read_gps()
         while len(gps_vals) < 20:
@@ -111,19 +112,26 @@ class Pathfinding:
         depth_data_length = float(len(self.camera_data))
         index = 2.0
         for depth in self.camera_data[2:-2]:
-            if depth != -1.0 and depth != 0.0 and self.camera_data[int(index) - 1] != -1.0 and self.camera_data[int(index) + 1] != -1.0:
-                center_angle = ((self.camera_horizontal_fov / (2.0 * depth_data_length)) * ((2.0 * index) + 1)) - (self.camera_horizontal_fov / 2.0)
-                angle1 = (center_angle + (self.camera_horizontal_fov / (2.0 * depth_data_length)) + self.compass_direction) % 360.0
-                angle2 = (center_angle - (self.camera_horizontal_fov / (2.0 * depth_data_length)) + self.compass_direction) % 360.0
-                point_dist = depth / (math.cos(abs(center_angle - angle1) * (math.pi / 180.0)))
+            if depth != -1.0 and self.camera_data[int(index) - 1] != -1.0 and self.camera_data[int(index) + 1] != -1.0:
+                if depth == 0.0:
+                    depth = 1.0
+                center_angle = -((((self.camera_horizontal_fov / (2.0 * depth_data_length)) * ((2.0 * index) + 1)) - (self.camera_horizontal_fov / 2.0) + self.compass_direction)) % 360.0
+                angle1 = (center_angle + (self.camera_horizontal_fov / (2.0 * depth_data_length))) % 360.0
+                angle2 = (center_angle - (self.camera_horizontal_fov / (2.0 * depth_data_length))) % 360.0
+                # this will be a problem for someone in the future, I just need it to work :)
+                center_angle *= -(math.pi / 180.0)
                 angle1 *= -(math.pi / 180.0)
                 angle2 *= -(math.pi / 180.0)
+                center_angle += (math.pi / 2.0)
+                angle1 += (math.pi / 2.0)
+                angle2 += (math.pi / 2.0)
+                point_dist = depth / (math.cos(abs(center_angle - angle1)))
                 point1 = (self.current_position[0] + point_dist * math.cos(angle1), self.current_position[1] + point_dist * math.sin(angle1))
                 point2 = (self.current_position[0] + point_dist * math.cos(angle2), self.current_position[1] + point_dist * math.sin(angle2))
                 to_be_blocked = self._bresenhams_line_floating_point(point1, point2)
                 for p in to_be_blocked:
                     self.is_blocked.add(p)
-            index += 1
+            index += 1.0
 
     # take a path found from a-star and return the target node in gps cords
     def get_target_node(self, path):

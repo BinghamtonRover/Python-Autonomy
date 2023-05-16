@@ -1,5 +1,5 @@
 from network import ProtoSocket, Device
-from network.src.generated.Protobuf.drive_pb2 import *
+from network.generated import DriveCommand
 
 class Drive: 
 	"""A service to manage drive controls.

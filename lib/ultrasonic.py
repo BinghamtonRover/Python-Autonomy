@@ -1,5 +1,6 @@
 import RPi.GPIO as GPIO
 import time
+import threading
 
 class Ultrasonic:
     def __init__(self):
@@ -21,11 +22,16 @@ class Ultrasonic:
         self.run_time = 0
         self.calculating = False
         self.distance = -1.0 # centimeters
+        self.blocked = False
+        self.previous_distance = -1.0
 
         self.thread_active = True
         self.reading_thread = threading.Thread(target = self._read_ultrasonic, args = ())
         print("starting thread")
         self.reading_thread.start()
+
+    def is_blocked(self):
+        return self.distance < 70.0 and self.previous_distance < 70.0
 
     def _trigger_ultrasonic(self):
         if(self.calculating == True):
@@ -47,7 +53,8 @@ class Ultrasonic:
             if(GPIO.input(self.ECHO_PIN) == False):
                 self.calculating = False
                 self.echo_high = False
-                self.distance = 17000(time.time() - self.echo_time)
+                self.previous_distance = self.distance
+                self.distance = 17000 * (time.time() - self.echo_time)
 
     def get_distance(self):
         return self.distance
@@ -62,6 +69,7 @@ class Ultrasonic:
                 self._trigger_ultrasonic()
                 self.run_time = current_time
             self._ultrasonic_events()
+        print("stopped reading ultrasonic")
 
     def clean_up(self):
         GPIO.cleanup()

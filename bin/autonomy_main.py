@@ -2,15 +2,17 @@ from lib.pathfinding import Pathfinding
 from lib.imu.imu import Imu
 from lib.gps_reader import GPSReader
 from lib.hardware.temp_tank_drive import Drive
+#from lib.drive import Drive
 from lib.obstacle_avoidance import ObstacleDetectionCamera
+from lib.ultrasonic import Ultrasonic
 #from network import ProtoSocket, Device
 import time
 import math
 
-def main(drive, gps, imu, camera):
+def main(drive, gps, imu, camera, ultrasonic):
     # setup
     drive.set_speeds(0.0, 0.0)
-    speed1 = 0.8
+    speed1 = 0.9
     print("starting")
     time.sleep(1.0)
     while gps.read_gps()[0] == 0:
@@ -20,6 +22,7 @@ def main(drive, gps, imu, camera):
         pass
     print("imu ready")
     pathfinding = Pathfinding(gps, imu, camera, (42.08744, -75.96739))
+    # the camera gets mad if it doesn't get to think ahead of time >:(
     camera.get_distances(20)
     time.sleep(3.0)
 
@@ -38,15 +41,21 @@ def main(drive, gps, imu, camera):
             current_direction = imu.get_orientation()[2] % 360.0
         drive.set_speeds(speed1, speed1)
         gps_pos = gps.read_gps()
-        while not reached_point(start_point, target_cords, gps_pos) and not camera.is_blocked():
+        while not reached_point(start_point, target_cords, gps_pos) and not ultrasonic.is_blocked():
+            print("us + td")
+            print(ultrasonic.get_distance())
+            print(target_direction)
             #print(math.pow(target_cords[0] - gps_pos[0], 2) + math.pow(target_cords[1] - gps_pos[1], 2))
             gps_pos = gps.read_gps()
             target_direction = pathfinding.get_direction(gps_pos, target_cords)
             current_direction = imu.get_orientation()[2] % 360.0
             adjust_while_moving_to_target(drive, target_direction, current_direction, 0.9, 0.4)
+        print(ultrasonic.get_distance())
+        #drive.set_speeds(-0.9, -0.9)
+        #time.sleep(1.5)
         drive.set_speeds(0.0, 0.0)
     drive.set_speeds(0.0, 0.0)
-
+    """
     # wander until the first marker is found
     drive.set_speeds(0.5, -0.5)
     while len(camera.read_markers()) == 0:
@@ -99,6 +108,7 @@ def main(drive, gps, imu, camera):
 
     # drive between the two found positions
     drive.set_speeds(0.0, 0.0)
+    """
 
 def get_second_marker_info(camera_info, first_id):
     for i in markers:
@@ -125,7 +135,7 @@ def drive_spiral(drive, current_rotation, current_position, origin, radius):
         drive.set_speeds(0.3, 0.7)
 
 def adjust_to_face_target_direction(drive, target_direction, current_direction):
-    speed1 = 0.7
+    speed1 = 0.9
     if (current_direction - target_direction) % 360.0 <= 180.0:
         drive.set_speeds(-speed1, speed1)
     else:
@@ -171,14 +181,19 @@ if __name__ == "__main__":
     print("Setting up camera...")
     camera = ObstacleDetectionCamera(1.8, 240, -0.3) #camera = DepthCamera()
 
+    print("Setting up ultrasonic...")
+    ultrasonic = Ultrasonic()
+
     print("Starting main")
     try:
-        main(drive, gps, imu, camera)
+        main(drive, gps, imu, camera, ultrasonic)
     finally:
         print("shit")
         drive.set_speeds(0.0, 0.0)
         gps.stop_reading()
         imu.stop_reading()
+        ultrasonic.stop_reading()
+        ultrasonic.clean_up()
         time.sleep(2)
 
 """

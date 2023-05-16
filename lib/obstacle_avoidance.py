@@ -31,18 +31,18 @@ class ObstacleDetectionCamera:
         
         # ((maxY - minY) % block_height) needs to equal 0
         self.minY = 140                  # lower frame cutoff
-        self.maxY = 460                 # upper frame cutoff
+        self.maxY = 480                 # upper frame cutoff
         self.cutoff_dist = cutoff_dist  # (depth cutoff) maximum distance the camera will analyze
         
         self.max_zeroes = max_zeroes    # max number of zeroes per section
         self.block_height = 15           # height of sections the screen is separated into
         #self.a = 0.055                  # "a" value used in function to calculate maximum slope between blocks in frame, I found this to be about 0.05 through some tests
-        self.a = 0.03
+        self.a = 0.01
         
         # for loading camera settings
         
     def is_blocked(self):
-        return (self._is_blocked() and self._is_blocked())
+        return (self._is_blocked() and self._is_blocked() and self._is_blocked())
 
     def _is_blocked(self):
         dists = self._get_distances(20)
@@ -76,7 +76,7 @@ class ObstacleDetectionCamera:
                 dists.append(-1.0)
             else:
                 dists.append(mean(row_dists))
-        print(dists)
+        #print(dists)
         return dists
 
     # returns an array of distance to an object on each horizontal section of the frame, with -1.0 being unblocked
