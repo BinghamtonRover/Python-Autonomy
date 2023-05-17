@@ -8,6 +8,7 @@ from lib.ultrasonic import Ultrasonic
 #from network import ProtoSocket, Device
 import time
 import math
+import sys
 
 def main(drive, gps, imu, camera, ultrasonic):
     # setup
