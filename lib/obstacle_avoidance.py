@@ -4,9 +4,14 @@ from statistics import mean
 import cv2
 import numpy as np
 import imutils
+import json
 
 class ObstacleDetectionCamera:
     def __init__(self, cutoff_dist, max_zeroes, min_slope):
+        # Load proper settings
+        self.DS5_product_ids = ["0AD1", "0AD2", "0AD3", "0AD4", "0AD5", "0AF6", "0AFE", "0AFF", "0B00", "0B01", "0B03", "0B07","0B3A"]
+        self.load_high_density_settings()
+        
         # Create a context object. This object owns the handles to all connected realsense devices
         self.pipeline = rs.pipeline()
 
@@ -26,14 +31,16 @@ class ObstacleDetectionCamera:
         
         # ((maxY - minY) % block_height) needs to equal 0
         self.minY = 140                  # lower frame cutoff
-        self.maxY = 360                 # upper frame cutoff
+        self.maxY = 480                 # upper frame cutoff
         self.cutoff_dist = cutoff_dist  # (depth cutoff) maximum distance the camera will analyze
         
         self.max_zeroes = max_zeroes    # max number of zeroes per section
-        self.block_height = 10           # height of sections the screen is separated into
+        self.block_height = 15           # height of sections the screen is separated into
         #self.a = 0.055                  # "a" value used in function to calculate maximum slope between blocks in frame, I found this to be about 0.05 through some tests
-        self.a = 0.03
-
+        self.a = 0.01
+        
+        # for loading camera settings
+        
     def is_blocked(self):
         return (self._is_blocked() and self._is_blocked() and self._is_blocked())
 
@@ -69,6 +76,7 @@ class ObstacleDetectionCamera:
                 dists.append(-1.0)
             else:
                 dists.append(mean(row_dists))
+        #print(dists)
         return dists
 
     # returns an array of distance to an object on each horizontal section of the frame, with -1.0 being unblocked
@@ -171,7 +179,7 @@ class ObstacleDetectionCamera:
         section_values = []
         zeroes = 0
         for y in range(minY, minY + self.block_height, 2):
-            for x in range(minX, minX + block_width, 2):
+            for x in range(minX, minX + block_width, 3):
                 dist = depth.get_distance(x, y)
                 if dist == 0.0:
                     zeroes += 1
@@ -214,7 +222,35 @@ class ObstacleDetectionCamera:
             # Calculates center
             center = (int((topLeft[0] + bottomLeft[0]) / 2), int((topLeft[1] + bottomLeft[1]) / 2))
             return center
-    
+        
+    def _find_device_that_supports_advanced_mode(self) :
+        ctx = rs.context()
+        ds5_dev = rs.device()
+        devices = ctx.query_devices();
+        for dev in devices:
+            if dev.supports(rs.camera_info.product_id) and str(dev.get_info(rs.camera_info.product_id)) in self.DS5_product_ids:
+                if dev.supports(rs.camera_info.name):
+                    print("Found device that supports advanced mode:", dev.get_info(rs.camera_info.name))
+                return dev
+        raise Exception("No device that supports advanced mode was found")
+
+    def load_high_density_settings(self):
+        dev = self._find_device_that_supports_advanced_mode()
+        advnc_mode = rs.rs400_advanced_mode(dev)
+        print("Advanced mode is", "enabled" if advnc_mode.is_enabled() else "disabled")
+        while not advnc_mode.is_enabled():
+            print("Trying to enable advanced mode...")
+            advnc_mode.toggle_advanced_mode(True)
+            # At this point the device will disconnect and re-connect.
+            print("Sleeping for 5 seconds...")
+            time.sleep(5)
+            # The 'dev' object will become invalid and we need to initialize it again
+            dev = find_device_that_supports_advanced_mode()
+            advnc_mode = rs.rs400_advanced_mode(dev)
+            print("Advanced mode is", "enabled" if advnc_mode.is_enabled() else "disabled")
+        with open('high-density-camera.json') as j_file:
+            json_dict = json.load(j_file)
+            advnc_mode.load_json(json.dumps(json_dict))
+
     def clean_up(self):
         self.pipeline.stop()
-
