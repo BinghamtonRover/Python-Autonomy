@@ -21,7 +21,7 @@ def main(drive, gps, imu, camera, ultrasonic):
     while imu.get_orientation()[2] == 0:
         pass
     print("imu ready")
-    pathfinding = Pathfinding(gps, imu, camera, (42.08744, -75.96739))
+    pathfinding = Pathfinding(gps, imu, camera, (42.08740, -75.96750))
     # the camera gets mad if it doesn't get to think ahead of time >:(
     camera.get_distances(20)
     time.sleep(3.0)
@@ -135,7 +135,7 @@ def drive_spiral(drive, current_rotation, current_position, origin, radius):
         drive.set_speeds(0.3, 0.7)
 
 def adjust_to_face_target_direction(drive, target_direction, current_direction):
-    speed1 = 0.9
+    speed1 = 0.75
     if (current_direction - target_direction) % 360.0 <= 180.0:
         drive.set_speeds(-speed1, speed1)
     else:

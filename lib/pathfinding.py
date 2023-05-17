@@ -79,7 +79,7 @@ class Pathfinding:
 
     # read gps coordinates
     def read_gps(self):
-        #return self.gps_reader.read_gps()
+        return self.gps_reader.read_gps()
         gps_vals = []
         gps_reading = self.gps_reader.read_gps()
         while len(gps_vals) < 20:
@@ -122,9 +122,9 @@ class Pathfinding:
                 center_angle *= -(math.pi / 180.0)
                 angle1 *= -(math.pi / 180.0)
                 angle2 *= -(math.pi / 180.0)
-                center_angle += (math.pi / 2.0)
-                angle1 += (math.pi / 2.0)
-                angle2 += (math.pi / 2.0)
+                center_angle += ((3.0 * math.pi) / 2.0)
+                angle1 += ((3.0 * math.pi) / 2.0)
+                angle2 += ((3.0 * math.pi) / 2.0)
                 point_dist = depth / (math.cos(abs(center_angle - angle1)))
                 point1 = (self.current_position[0] + point_dist * math.cos(angle1), self.current_position[1] + point_dist * math.sin(angle1))
                 point2 = (self.current_position[0] + point_dist * math.cos(angle2), self.current_position[1] + point_dist * math.sin(angle2))

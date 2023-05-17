@@ -31,7 +31,7 @@ class Ultrasonic:
         self.reading_thread.start()
 
     def is_blocked(self):
-        return self.distance < 70.0 and self.previous_distance < 70.0
+        return self.distance < 90.0 and self.previous_distance < 90.0
 
     def _trigger_ultrasonic(self):
         if(self.calculating == True):
