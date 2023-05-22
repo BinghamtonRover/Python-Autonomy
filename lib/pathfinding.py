@@ -128,7 +128,7 @@ class Pathfinding:
                 point_dist = depth / (math.cos(abs(center_angle - angle1)))
                 point1 = (self.current_position[0] + point_dist * math.cos(angle1), self.current_position[1] + point_dist * math.sin(angle1))
                 point2 = (self.current_position[0] + point_dist * math.cos(angle2), self.current_position[1] + point_dist * math.sin(angle2))
-                to_be_blocked = self._bresenhams_line_floating_point(point1, point2)
+                to_be_blocked = self._expand_obstacle(self._bresenhams_line_floating_point(point1, point2))
                 for p in to_be_blocked:
                     self.is_blocked.add(p)
             index += 1.0
@@ -238,6 +238,16 @@ class Pathfinding:
             y = math.floor(start[1] + dy * i)
             line.append((x, y))
         return list(dict.fromkeys(line))
+
+    def _expand_obstacle(self, list):
+        return list
+        out_list = []
+        for i in list:
+            out_list.append(i)
+            adj = self._get_adjacent_nodes_with_corners(i)
+            for a in adj:
+                out_list.append(a)
+        return list(dict.fromkeys(out_list))
 
     def rotational_equality(self, a, b):
         return ((a - b) % 360.0 < 3.0)

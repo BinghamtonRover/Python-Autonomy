@@ -38,9 +38,10 @@ class ObstacleDetectionCamera:
         self.block_height = 15           # height of sections the screen is separated into
         #self.a = 0.055                  # "a" value used in function to calculate maximum slope between blocks in frame, I found this to be about 0.05 through some tests
         self.a = 0.01
-        
-        # for loading camera settings
-        
+
+        # idk maybe try this I feel like shit but the thing above has a bug :skull:
+        self.fixed_min_slope = -0.00001
+
     def is_blocked(self):
         return (self._is_blocked() and self._is_blocked() and self._is_blocked())
 
@@ -145,14 +146,17 @@ class ObstacleDetectionCamera:
                         sum_of_first_two_vertical_sections += row_dist
                     else:
                         # calculate min slope based on regression formula I found
-                        b = (0.075 * sum_of_first_two_vertical_sections) + 1.0
+                        b = (sum_of_first_two_vertical_sections) + 1.0
                         min_slope = - (self.a / ((self.a + b) * (self.a + b)))
 
                         # don't worry past the cutoff distance
                         if row_dist > self.cutoff_dist:
                             cutoff_reached = True
                         # check if slope indicates there is an obstacle (undrivable terrain)
-                        elif previous_row_distance - row_dist < min_slope:
+                        elif self.fixed_min_slope != None and previous_row_distance - row_dist < self.fixed_min_slope:
+                            previous_row_distance = row_dist
+                            continue
+                        elif self.fixed_min_slope == None and previous_row_distance - row_dist < min_slope:
                             previous_row_distance = row_dist
                             continue
                         else:
