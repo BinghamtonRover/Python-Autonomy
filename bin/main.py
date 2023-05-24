@@ -1,5 +1,5 @@
+from network import *
 from lib.network import *
-from lib.concurrency import *
 
 class Collection: 
 	def __init__(self):
@@ -11,8 +11,8 @@ if __name__ == "__main__":
 	print("Starting program...")
 	collection = Collection()
 
-	data_server_process = ServerProcess(collection.data)
-	video_server_process = ServerProcess(collection.video)
+	data_server_process = ServerThread(collection.data)
+	video_server_process = ServerThread(collection.video)
 
 	data_server_process.start()
 	video_server_process.start()

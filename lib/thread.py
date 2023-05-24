@@ -12,7 +12,7 @@ class AutonomyThread(threading.Thread):
 
 	def run(self): 
 		print(f'"Navigating" to {self.command.destination}')
-		camera = cv2.VideoCapture(1)
+		camera = cv2.VideoCapture(0)
 		temp = True
 		while True: 
 			if not self.keep_alive: return

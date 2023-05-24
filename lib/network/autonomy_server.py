@@ -1,7 +1,7 @@
 from network import *
 from network.generated import *
 
-from lib.concurrency import AutonomyThread
+from lib.thread import AutonomyThread
 
 class AutonomyServer(ProtoSocket): 
 	def __init__(self, port, collection): 
