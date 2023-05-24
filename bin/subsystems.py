@@ -1,4 +1,4 @@
-from network import ProtoSocket, Device
+from network import *
 from network.generated import DriveCommand
 from lib.hardware.tank_drive import TankDrive
 
@@ -21,11 +21,13 @@ class TankSubsystems(ProtoSocket):
 
 if __name__ == "__main__": 
 	server = TankSubsystems()
-	try: 
-		while True: 
-			try: server.listen()
-			except KeyboardInterrupt: break
-			except OSError as error: 
-				if error.errno == 10054: continue
-				else: raise error
-	finally: server.close()
+	thread = ServerThread(server)
+
+	thread.start()
+	try:
+		while True: time.sleep(100)
+	except (KeyboardInterrupt, SystemExit): pass
+	finally: 
+		thread.close()
+		thread.join()
+

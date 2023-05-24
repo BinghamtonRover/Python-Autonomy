@@ -9,7 +9,6 @@ class Ultrasonic:
         self.TRIG_PULSE_WIDTH = 0.000010 # seconds
         self.SAMPLE_PERIOD = 0.1 # seconds
 
-        print("mode set")
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.TRIG_PIN, GPIO.OUT)
         GPIO.setup(self.ECHO_PIN, GPIO.IN)
@@ -72,7 +71,6 @@ class Ultrasonic:
         while self.thread_active:
             current_time = time.time()
             if(current_time - self.run_time >= self.SAMPLE_PERIOD):
-                #print("trigger")
                 self._trigger_ultrasonic()
                 self.run_time = current_time
             self._ultrasonic_events()
