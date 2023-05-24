@@ -10,7 +10,7 @@ import time
 import math
 import sys
 
-def main2(drive, gps, imu, camera, ultrasonic):
+def main2(drive, gps, imu, camera, ultrasonic_left, ultrasonic_right):
     # setup
     drive.set_speeds(0.0, 0.0)
     speed1 = 0.9
@@ -63,24 +63,19 @@ def pathfind_to_find_marker(drive, gps, imu, camera, ultrasonic, pathfinding):
             current_direction = imu.get_orientation()[2] % 360.0
         drive.set_speeds(speed1, speed1)
         gps_pos = gps.read_gps()
-        while not reached_point(start_point, target_cords, gps_pos) and not ultrasonic.is_blocked() and len(camera.read_markers()) == 0:
-            print("us + td")
-            print(ultrasonic.get_distance())
-            print(target_direction)
-            #print(math.pow(target_cords[0] - gps_pos[0], 2) + math.pow(target_cords[1] - gps_pos[1], 2))
+        while not reached_point(start_point, target_cords, gps_pos) and (ultrasonic_left.is_drivable() and ultrasonic_right.is_drivable()) and (not camera.is_blocked()) and len(camera.read_markers()) == 0:
             gps_pos = gps.read_gps()
             target_direction = pathfinding.get_direction(gps_pos, target_cords)
             current_direction = imu.get_orientation()[2] % 360.0
             adjust_while_moving_to_target(drive, target_direction, current_direction, 0.9, 0.4)
-        print(ultrasonic.get_distance())
-        if ultrasonic.is_blocked():
+        if not (ultrasonic_left.is_drivable() and ultrasonic_right.is_drivable()):
             drive.set_speeds(-0.9, -0.9)
             time.sleep(1.0)
         drive.set_speeds(0.0, 0.0)
     drive.set_speeds(0.0, 0.0)
     print("done!")
 
-def main(drive, gps, imu, camera, ultrasonic):
+def main(drive, gps, imu, camera, ultrasonic_left, ultrasonic_right):
     # setup
     drive.set_speeds(0.0, 0.0)
     speed1 = 0.9
@@ -112,16 +107,11 @@ def main(drive, gps, imu, camera, ultrasonic):
             current_direction = imu.get_orientation()[2] % 360.0
         drive.set_speeds(speed1, speed1)
         gps_pos = gps.read_gps()
-        while not reached_point(start_point, target_cords, gps_pos) and not ultrasonic.is_blocked():
-            print("us + td")
-            print(ultrasonic.get_distance())
-            print(target_direction)
-            #print(math.pow(target_cords[0] - gps_pos[0], 2) + math.pow(target_cords[1] - gps_pos[1], 2))
+        while not reached_point(start_point, target_cords, gps_pos) and (ultrasonic_left.is_drivable() and ultrasonic_right.is_drivable()) and (not camera.is_blocked()):
             gps_pos = gps.read_gps()
             target_direction = pathfinding.get_direction(gps_pos, target_cords)
             current_direction = imu.get_orientation()[2] % 360.0
             adjust_while_moving_to_target(drive, target_direction, current_direction, 0.9, 0.4)
-        print(ultrasonic.get_distance())
         #drive.set_speeds(-0.9, -0.9)
         #time.sleep(1.0)
         drive.set_speeds(0.0, 0.0)
@@ -200,18 +190,24 @@ if __name__ == "__main__":
     camera = ObstacleDetectionCamera(1.8, 240, -0.3) #camera = DepthCamera()
 
     print("Setting up ultrasonic...")
-    ultrasonic = Ultrasonic()
+    # TODO create ultrasonic objects for left and right (it shouldn't matter if they are flipped btw)
+    ultrasonic_left = Ultrasonic()
+    ultrasonic_right = Ultrasonic()
 
     print("Starting main")
     try:
-        main2(drive, gps, imu, camera, ultrasonic)
+        main2(drive, gps, imu, camera, ultrasonic_left, ultrasonic_right)
     finally:
+        # TODO on the rover we don't want to close all of this, we want it to be passed in
         print("shit")
         drive.set_speeds(0.0, 0.0)
         gps.stop_reading()
         imu.stop_reading()
-        ultrasonic.stop_reading()
-        ultrasonic.clean_up()
+        ultrasonic_left.stop_reading()
+        ultrasonic_right.stop_reading()
+        time.sleep(1)
+        ultrasonic_left.clean_up()
+        ultrasonic_right.clean_up()
         time.sleep(2)
 
 """
