@@ -1,5 +1,6 @@
 import pigpio
 import time
+import sys
 
 from network.generated import DriveCommand
 
@@ -21,16 +22,20 @@ VEL_MAX_POS = 1.0 #10.0
 VEL_MED_POS = 0.5 #5.0
 
 class TankDrive: 
-    def __init__(self): 
-        self.gpio = pigpio.pi()
-        if self.gpio.connected:
-            print("Tank successfully initialized")
-        else:
-            print("[Error] PiGPIO is not running")
-            quit()
+    def __init__(self):
+        self.gpio = None 
         self.throttle = 0
         self.left_velocity = 0
         self.right_velocity = 0
+        if (sys.platform != "linux"): 
+            print(f"[Warning] Not initializing the tank on {sys.platform}")
+            return
+        self.gpio = pigpio.pi()
+        if self.gpio.connected: 
+            print("[Info] Tank successfully initialized")
+        else:
+            print("[Error] PiGPIO is not running")
+            quit()
 
     def handle_command(self, command: DriveCommand):
         if command.set_throttle: self.throttle = command.throttle
@@ -45,6 +50,7 @@ class TankDrive:
         self.set_velocity(RIGHT_MOTOR_PIN, self.right_velocity * self.throttle)
 
     def set_velocity(self, pin, velocity): 
+        if self.gpio is None: return  # not on a pigipio-enabled platform, see [__init__]
         velocity = -velocity
         pwm = 0
         if velocity == 0: pwm = PWM_ZERO
