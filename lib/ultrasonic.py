@@ -42,19 +42,24 @@ class Ultrasonic:
         self.trig_time = time.time()
 
     def _ultrasonic_events(self):
-        if(self.trig_high == True):
+        GPIO.output(self.TRIG_PIN, GPIO.HIGH)
+        self.trig_time = time.time()
+        while(True):
+            #print("setting trigger high")
             if(time.time() - self.trig_time >= self.TRIG_PULSE_WIDTH):
-                GPIO.output(self.TRIG_PIN, GPIO.LOW)
-                self.trig_high = False
-        elif(GPIO.input(self.ECHO_PIN) == True and self.echo_high == False):
-            self.echo_high = True
-            self.echo_time = time.time()
-        elif(self.echo_high == True):
+                break
+        GPIO.output(self.TRIG_PIN, GPIO.LOW)
+        while(True):
+            #print("waiting for echo")
+            if(GPIO.input(self.ECHO_PIN) == True):
+                break
+        self.echo_time = time.time()
+        while(True):
+            #print("timing echo")
             if(GPIO.input(self.ECHO_PIN) == False):
-                self.calculating = False
-                self.echo_high = False
-                self.previous_distance = self.distance
-                self.distance = 17000 * (time.time() - self.echo_time)
+                break
+        self.previous_distance = self.distance
+        self.distance = 17000 * (time.time() - self.echo_time)
 
     def get_distance(self):
         return self.distance
