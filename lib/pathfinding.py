@@ -55,20 +55,15 @@ class Pathfinding:
 
         # calculate the path and target direction
         path = self._a_star(lambda a, b : (abs(b[0] - a[0]) + abs(b[1] - a[1])))
-        print(path)
         target = self.get_target_node(path)
-        print(self._gps_to_grid(target))
-        print(self.current_position)
-        print(self.is_blocked)
         
         # output target direction and target location
         return target
 
-    def is_at_goal(self):
-        target_node = self._gps_to_grid(self.target_gps_coords)
-        adj = self._get_adjacent_nodes_with_corners(target_node)
-        adj.append(target_node)
-        return self.current_position in adj
+    def is_at_goal(self, radius):
+        current_gps_position = self._grid_to_gps(self.current_position)
+        dist_square = math.pow(self.target_gps_coords[0] - current_gps_position[0], 2) + math.pow(self.target_gps_coords[1] - current_gps_position[1], 2)
+        return dist_square <= math.pow(radius * (0.00001 / 1.11), 2)
 
     def _read_data(self):
         # read gps, compass, and camera data
