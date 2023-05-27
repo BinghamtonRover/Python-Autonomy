@@ -68,7 +68,7 @@ def get_targets(center, radius):
 def pathfind_to_find_marker(drive, gps, imu, camera, ultrasonic, pathfinding, marker_radius):
     speed1 = 0.9
     # go to gps location
-    while (not pathfinding.is_at_goal() and len(camera.read_markers()) == 0):
+    while (not pathfinding.is_at_goal(marker_radius) and len(camera.read_markers()) == 0):
         print("running pathfinding")
         target_cords = pathfinding.pathfinding()
         current_direction = imu.get_orientation()[2] % 360.0
