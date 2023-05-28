@@ -7,7 +7,7 @@ import os
 camera_horizontal_fov = 90.0
 compass_direction = 0.0
 current_position = (0, 0)
-
+"""
 def _update_blocked_areas(depth_lists):
     grid_ticker = {}
     max_ticks = 40
@@ -34,7 +34,7 @@ def _update_blocked_areas(depth_lists):
                 out_list.append((math.floor(k[0] + math.cos(compass_direction)), math.floor(k[1] + math.sin(compass_direction))))
             out_list.append(k)
     print(out_list)
-
+"""
 def main():
     print("Started")
     camera = ObstacleDetectionCamera(2.4, 50, -0.3)

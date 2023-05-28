@@ -16,7 +16,7 @@ class MockRealSense:
 DS5_PRODUCT_IDS = ["0AD1", "0AD2", "0AD3", "0AD4", "0AD5", "0AF6", "0AFE", "0AFF", "0B00", "0B01", "0B03", "0B07","0B3A"]
 
 class ObstacleDetectionCamera:
-    def __init__(self, cutoff_dist, max_zeroes, min_slope, test=False, depth_camera_thread):
+    def __init__(self, cutoff_dist, max_zeroes, min_slope, depth_camera_test, test=False):
         print("[Info] Initializing Obstacle Detection Camera")
         self.test = test
         self.camera_width = 640

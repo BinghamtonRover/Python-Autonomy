@@ -4,9 +4,9 @@ import math
 import time
 import threading
 import statistics
-from lib.gps_reader import GPSReader
-from lib.obstacle_avoidance import ObstacleDetectionCamera
-from lib.imu.imu import Imu
+from lib.hardware.gps_thread import GpsThread
+from lib.cameras.obstacle_avoidance import ObstacleDetectionCamera
+from lib.hardware.imu_thread import ImuThread
 
 class Pathfinding:
     def __init__(self, gps_reader, imu_reader, camera, target_gps_coords, subsystems, dashboard):

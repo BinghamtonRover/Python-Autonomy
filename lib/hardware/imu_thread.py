@@ -6,8 +6,8 @@ import time
 from .osc_decoder import decode
 from network.generated import Orientation, RoverPosition
 
-IMU_SERIAL_PORT = "COM25"
-
+# IMU_SERIAL_PORT = "COM25"
+IMU_SERIAL_PORT = "/dev/ttyACM1"
 class MockImu:
 	def __init__(self):
 		print("[Warning] Using mock IMU")

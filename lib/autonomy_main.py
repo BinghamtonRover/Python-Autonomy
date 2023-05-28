@@ -1,6 +1,6 @@
 from lib.pathfinding import Pathfinding
-from lib.hardware.imu import Imu
-from lib.hardware.gps_reader import GPSReader
+from lib.hardware.imu_thread import ImuThread
+from lib.hardware.gps_thread import GpsThread
 from lib.network.drive import Drive
 from lib.cameras.obstacle_avoidance import ObstacleDetectionCamera
 #from network import ProtoSocket, Device
@@ -126,20 +126,6 @@ class Autonomy:
             if i[0] != first_id:
                 return i
         return []
-
-"""
-    def _drive_spiral(drive, current_rotation, current_position, origin, radius):
-        rotation_vector = (-(current_position[1] - origin[1]), current_position[0] - origin[0])
-        current_radius = math.sqrt(math.pow(rotation_vector[0], 2) + math.pow(rotation_vector[1], 2))
-        target_direction = (math.atan2(-rotation_vector[1], rotation_vector[0]) * (180.0 / math.pi)) % 360.0
-        error = 0.1
-        if current_radius >= radius - error and current_radius <= radius + error:
-            _adjust_while_moving_to_target(drive, target_direction, current_direction, 0.7, 0.3)
-        elif current_radius < radius - error:
-            drive.set_speeds(0.7, 0.3)
-        else:
-            drive.set_speeds(0.3, 0.7)
-"""
 
     def _adjust_to_face_target_direction(drive, target_direction, current_direction):
         speed1 = 0.75

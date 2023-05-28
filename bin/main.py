@@ -21,7 +21,7 @@ class AutonomyCollection:
 		self.gps = GpsThread(collection=self)
 		self.imu = ImuThread(collection=self)
 		self.depth_camera = DepthCameraThread(collection=self)
-		self.camera = ObstacleDetectionCamera(1.8, 240, -0.3, test=False, self.depth_camera)
+		self.camera = ObstacleDetectionCamera(1.8, 240, -0.3, self.depth_camera)
 
 		# Main process
 		print("[Info] Initializing main thread...")
