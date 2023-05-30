@@ -5,6 +5,7 @@ import threading
 import cv2
 
 fps = 24
+CAMERA_ID = 0
 
 class AutonomyVideoServer(ProtoSocket):
 	"""Responds to heartbeats and reports that all cameras are functional.
@@ -13,25 +14,21 @@ class AutonomyVideoServer(ProtoSocket):
 	program and wait for the dashboard to connect to us. Then, we can provide a [VideoClient] with the
 	right port number for the dashboard.
 	"""
-	def __init__(self, port, collection): 
+	def __init__(self, port): 
 		super().__init__(port=port, device=Device.VIDEO)
-		self.collection = collection
 		self.quality = 70
 
-	def close(self): 
-		super().close()
-
-	def on_connect(self, source): 
-		super().on_connect(source)
-
-	def on_disconnect(self): 
-		super().on_disconnect()
-
-	def send_frame(self, camera_id, frame, name):
+	def send_frame(self, frame, name):
+		if not self.is_connected(): return
 		encoded, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, self.quality])
 		details = CameraDetails(name=name, status=CameraStatus.CAMERA_ENABLED, fps=fps, quality=self.quality)
-		message = VideoData(id=camera_id, details=details, frame=buffer.tobytes())
+		message = VideoData(id=CAMERA_ID, details=details, frame=buffer.tobytes())
 		self.send_message(message)
+
+	def send_status(self, status):
+		if not self.is_connected(): return
+		data = VideoData(id=CAMERA_ID, details=CameraDetails(status=status))
+		self.send_message(data)
 
 	def on_message(self, wrapper): 
 		if wrapper.name == "VideoCommand": 

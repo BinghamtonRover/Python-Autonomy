@@ -11,8 +11,12 @@ class Drive:
 	- To change the top speed of the tank, use [set_throttle]
 	- To manually control each wheel, use [set_speeds]
 	"""
-	def __init__(self, socket): 
-		self.socket = socket
+	def __init__(self, collection): 
+		self.socket = collection.subsystems
+
+	def close(self): 
+		self.set_speeds(0, 0)
+		print("Stopped driving")
 
 	def set_throttle(self, throttle): 
 		#print(f"Setting throttle to {throttle}")

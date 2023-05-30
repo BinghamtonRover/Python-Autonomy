@@ -1,8 +1,6 @@
 from network import *
 from network.generated import *
 
-from lib.thread import AutonomyThread
-
 class AutonomyServer(ProtoSocket): 
 	def __init__(self, port, collection): 
 		super().__init__(port=port, device=Device.AUTONOMY)
@@ -10,6 +8,7 @@ class AutonomyServer(ProtoSocket):
 
 	def on_disconnect(self): 
 		super().on_disconnect()
+		print("Autonomy server disconnected")
 		self.disable_autonomy()
 
 	def update_settings(self, settings): 
@@ -32,11 +31,11 @@ class AutonomyServer(ProtoSocket):
 			self.enable_autonomy(command)
 
 	def enable_autonomy(self, command): 
-		print("Running autonomy...")
 		self.disable_autonomy()
-		self.collection.autonomy.command = command
-		self.collection.autonomy.start()
+		self.collection.autonomy.startTask(command)
 
 	def disable_autonomy(self): 
-		self.collection.autonomy.close()
-		self.collection.autonomy = AutonomyThread(collection=self.collection)
+		self.collection.autonomy.stopTask()
+
+	def send_message(self, message):
+		if self.is_connected(): super().send_message(message)

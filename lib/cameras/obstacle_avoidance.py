@@ -6,18 +6,44 @@ import numpy as np
 import imutils
 import json
 
-class ObstacleDetectionCamera:
-    def __init__(self, cutoff_dist, max_zeroes, min_slope):
-        # Load proper settings
-        self.DS5_product_ids = ["0AD1", "0AD2", "0AD3", "0AD4", "0AD5", "0AF6", "0AFE", "0AFF", "0B00", "0B01", "0B03", "0B07","0B3A"]
-        self.load_high_density_settings()
-        
-        # Create a context object. This object owns the handles to all connected realsense devices
-        self.pipeline = rs.pipeline()
+class MockRealSense:
+    def __init__(self): 
+        print("[Warning] Using mock realsense")
 
-        # Configure streams
+    def start(self, *args): pass
+    def stop(self, *args): pass
+
+DS5_PRODUCT_IDS = ["0AD1", "0AD2", "0AD3", "0AD4", "0AD5", "0AF6", "0AFE", "0AFF", "0B00", "0B01", "0B03", "0B07","0B3A"]
+
+class ObstacleDetectionCamera:
+    def __init__(self, cutoff_dist, max_zeroes, min_slope, test=False):
+        print("[Info] Initializing Obstacle Detection Camera")
+        self.test = test
         self.camera_width = 640
         self.camera_height = 480
+        # ((maxY - minY) % block_height) needs to equal 0
+        self.minY = 140                  # lower frame cutoff
+        self.maxY = 480                 # upper frame cutoff
+        self.cutoff_dist = cutoff_dist  # (depth cutoff) maximum distance the camera will analyze
+        self.max_zeroes = max_zeroes    # max number of zeroes per section
+        self.block_height = 15           # height of sections the screen is separated into
+        #self.a = 0.055                  # "a" value used in function to calculate maximum slope between blocks in frame, I found this to be about 0.05 through some tests
+        self.a = 0.01
+        self.fixed_min_slope = -0.00001   # idk maybe try this I feel like shit but the thing above has a bug :skull:
+        self.dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
+        self.parameters = cv2.aruco.DetectorParameters_create()
+        # Create a context object. This object owns the handles to all connected realsense devices
+        if test: 
+            self.pipeline = MockRealSense()
+        else: 
+            self.pipeline = rs.pipeline()
+            self.init_realsense()
+
+    def init_realsense(self):
+        # Load proper settings
+        self.load_high_density_settings()
+
+        # Configure streams
         self.config = rs.config()
         self.config.enable_stream(rs.stream.depth, self.camera_width, self.camera_height, rs.format.z16, 30)
         self.config.enable_stream(rs.stream.color, self.camera_width, self.camera_height, rs.format.bgr8, 30)
@@ -25,25 +51,9 @@ class ObstacleDetectionCamera:
         # Start streaming
         self.pipeline.start(self.config)
         
-        # cv2
-        self.dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
-        self.parameters = cv2.aruco.DetectorParameters_create()
-        
-        # ((maxY - minY) % block_height) needs to equal 0
-        self.minY = 140                  # lower frame cutoff
-        self.maxY = 480                 # upper frame cutoff
-        self.cutoff_dist = cutoff_dist  # (depth cutoff) maximum distance the camera will analyze
-        
-        self.max_zeroes = max_zeroes    # max number of zeroes per section
-        self.block_height = 15           # height of sections the screen is separated into
-        #self.a = 0.055                  # "a" value used in function to calculate maximum slope between blocks in frame, I found this to be about 0.05 through some tests
-        self.a = 0.01
-
-        # idk maybe try this I feel like shit but the thing above has a bug :skull:
-        self.fixed_min_slope = -0.00001
-
     def is_blocked(self):
-        return (self._is_blocked() and self._is_blocked() and self._is_blocked())
+        if self.test: return False
+        else: return (self._is_blocked() and self._is_blocked() and self._is_blocked())
 
     def _is_blocked(self):
         dists = self._get_distances(20)
@@ -232,7 +242,7 @@ class ObstacleDetectionCamera:
         ds5_dev = rs.device()
         devices = ctx.query_devices();
         for dev in devices:
-            if dev.supports(rs.camera_info.product_id) and str(dev.get_info(rs.camera_info.product_id)) in self.DS5_product_ids:
+            if dev.supports(rs.camera_info.product_id) and str(dev.get_info(rs.camera_info.product_id)) in DS5_PRODUCT_IDS:
                 if dev.supports(rs.camera_info.name):
                     print("Found device that supports advanced mode:", dev.get_info(rs.camera_info.name))
                 return dev
@@ -258,3 +268,6 @@ class ObstacleDetectionCamera:
 
     def clean_up(self):
         self.pipeline.stop()
+
+    def close(self): 
+        self.clean_up()
