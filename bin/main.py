@@ -1,29 +1,47 @@
 from network import *
-from lib.network import *
 
-class Collection: 
+from lib.cameras import *
+from lib.hardware import *
+from lib.network import *
+from lib.thread import *
+
+class AutonomyCollection: 
 	def __init__(self):
-		self.video = AutonomyVideoServer(port=8002, collection=self)
-		self.data = AutonomyServer(port=8004, collection=self)
+		print("[Info] Initializing Autonomy")
+
+		# Sockets
+		print("[Info] Initializing network...")
+		self.subsystems = AutonomyDataServer(port=8003)
+		self.video = AutonomyVideoServer(port=8002)
+		self.dashboard = AutonomyServer(port=8004, collection=self)
+
+		# Hardware control
+		print("[Info] Initializing hardware...")
+		self.drive = Drive(collection=self)
+		self.gps = GpsThread(collection=self)
+		self.imu = ImuThread(collection=self)
+		self.camera = ObstacleDetectionCamera(1.8, 240, -0.3, test=True)
+
+		# Main process
+		print("[Info] Initializing main thread...")
 		self.autonomy = AutonomyThread(collection=self)
 
+		print("[Info] Autonomy initialized")
+
+	def close(self):  # close everything in reverse order
+		self.drive.close()
+		self.autonomy.close()
+		self.camera.close()
+		self.imu.close()
+		self.gps.close()
+		self.subsystems.close_socket()
+		self.video.close_socket()
+		self.dashboard.close_socket()
+
+	def start(self): 
+		ServerThread.startThreads([self.dashboard, self.video, self.subsystems, self.gps, self.imu, self.autonomy])
+
 if __name__ == "__main__":
-	print("Starting program...")
-	collection = Collection()
-
-	data_server_process = ServerThread(collection.data)
-	video_server_process = ServerThread(collection.video)
-
-	data_server_process.start()
-	video_server_process.start()
-
-	try:
-		while True: time.sleep(100)
-	except (KeyboardInterrupt, SystemExit): pass
-	finally: 
-		print("Closing sockets...")
-		data_server_process.close()
-		video_server_process.close()
-		collection.autonomy.close()
-		video_server_process.join()
-		data_server_process.join()
+	autonomy = AutonomyCollection()
+	autonomy.start()
+	autonomy.close()

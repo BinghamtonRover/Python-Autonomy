@@ -225,22 +225,3 @@ if __name__ == "__main__":
         ultrasonic_left.clean_up()
         ultrasonic_right.clean_up()
         time.sleep(2)
-
-"""
-class AutonomyProcess(Process):
-    def run(self): 
-        drive = Tank() # AutonomyRover()
-        gps = GPSReader()
-        imu = Imu()
-        camera = None #camera = DepthCamera()
-        try:
-            main(drive, gps, imu, camera)
-        finally:
-            print("shit")
-            drive.send_drive_data(0.0, 1.0, 1.0)
-    
-    def close(self): 
-        print("Closing...")
-        self.terminate()
-        super().close()
-"""

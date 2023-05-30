@@ -8,41 +8,48 @@ class AutonomyThread(threading.Thread):
 	def __init__(self, collection): 
 		super().__init__()
 		self.collection = collection
+		self.camera = cv2.VideoCapture(0)
 		self.keep_alive = True
+		self.command = None
 
 	def run(self): 
-		print(f'"Navigating" to {self.command.destination}')
-		camera = cv2.VideoCapture(0)
-		temp = True
-		while True: 
-			if not self.keep_alive: return
-			try: 
-				success, frame = camera.read()
-				if not success: raise "Oh no!"
-				self.collection.video.send_frame(camera_id=0, frame=frame, name=CameraName.ROVER_FRONT)
-				data = AutonomyData(
-					state=AutonomyState.PATHING if temp else AutonomyState.DRIVING, 
-					obstacles = [
-						GpsCoordinates(latitude=1, longitude=1),
-						GpsCoordinates(latitude=1, longitude=2),
-						GpsCoordinates(latitude=2, longitude=1),
-					],
-					path = [
-						GpsCoordinates(latitude=0, longitude=1),
-						GpsCoordinates(latitude=0, longitude=2),
-						GpsCoordinates(latitude=0, longitude=3),
-						GpsCoordinates(latitude=1, longitude=3),
-					],
-					task=self.command.task,
-					destination=self.command.destination,
-				)
-				temp = not temp
-				self.collection.data.send_message(data)
-				time.sleep(0.1)
-			except KeyboardInterrupt: break
-			except OSError as error: 
-				if error.errno in [10040, 101]: print("Network error")
-				else: raise error
+		while self.keep_alive: 
+			# Read camera and send it to the dashboard
+			video = self.collection.video
+			if not self.camera.isOpened(): 
+				video.send_status(CameraStatus.CAMERA_DISCONNECTED)
+				time.sleep(0)
+				continue
+			success, frame = self.camera.read()
+			if not success: 
+				print("Camera didn't respond")
+			self.collection.video.send_frame(frame=frame, name=CameraName.ROVER_FRONT)
+
+			if self.command is None: continue
+			data = AutonomyData(
+				state=AutonomyState.PATHING,
+				obstacles = [
+					GpsCoordinates(latitude=1, longitude=1),
+					GpsCoordinates(latitude=1, longitude=2),
+					GpsCoordinates(latitude=2, longitude=1),
+				],
+				path = [
+					GpsCoordinates(latitude=0, longitude=1),
+					GpsCoordinates(latitude=0, longitude=2),
+					GpsCoordinates(latitude=0, longitude=3),
+					GpsCoordinates(latitude=1, longitude=3),
+				],
+				task=self.command.task,
+				destination=self.command.destination,
+			)
+			self.collection.dashboard.send_message(data)
+
+	def startTask(self, command): 
+		self.command = command
+		print(f'"Navigating" to {command.destination}')
+
+	def stopTask(self): 
+		self.command = None
 
 	def close(self): 
 		self.keep_alive = False
