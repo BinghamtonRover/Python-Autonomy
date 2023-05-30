@@ -10,7 +10,7 @@ import time
 import math
 import sys
 
-def main2(drive, gps, imu, camera, ultrasonic_left, ultrasonic_right):
+def main2(drive, gps, imu, camera, ultrasonic_left, ultrasonic_right, marker_radius):
     # setup
     drive.set_speeds(0.0, 0.0)
     speed1 = 0.9
@@ -22,12 +22,21 @@ def main2(drive, gps, imu, camera, ultrasonic_left, ultrasonic_right):
     while imu.get_orientation()[2] == 0:
         pass
     print("imu ready")
-    pathfinding = Pathfinding(gps, imu, camera, (42.08740, -75.96750))
+    pathfinding = Pathfinding(gps, imu, camera, gps_goal)
     # the camera gets mad if it doesn't get to think ahead of time >:(
     camera.get_distances(20)
     time.sleep(3.0)
 
-    pathfind_to_find_marker(drive, gps, imu, camera, ultrasonic, pathfinding)
+    pathfind_to_find_marker(drive, gps, imu, camera, ultrasonic, pathfinding, marker_radius)
+
+    targets = get_targets(gps_goal, marker_radius)
+
+    while len(camera.read_markers()) == 0:
+        pathfinding = Pathfinding(gps, imu, camera, targets[0])
+        del targets[0]
+        if len(targets) == 0:
+            targets = get_targets(gps_goal, marker_radius)
+        pathfind_to_find_marker(drive, gps, imu, camera, ultrasonic, pathfinding, 2.0)
 
     done = False
     while not done:
@@ -46,18 +55,25 @@ def main2(drive, gps, imu, camera, ultrasonic_left, ultrasonic_right):
     drive.set_speeds(0.0, 0.0)
     print("done")
 
-def pathfind_to_find_marker(drive, gps, imu, camera, ultrasonic, pathfinding):
+def get_targets(center, radius):
+    radius *= 1.414
+    targets = []
+    for i in range(math.ceil(radius), 1, -1):
+        targets.append((center[0] + i * (0.00001 / 1.11), center[1]))
+        targets.append((center[0], center[1] + i * (0.00001 / 1.11)))
+        targets.append((center[0] - i * (0.00001 / 1.11), center[1]))
+        targets.append((center[0], center[1] + i * (0.00001 / 1.11)))
+    targets.append(center)
+
+def pathfind_to_find_marker(drive, gps, imu, camera, ultrasonic, pathfinding, marker_radius):
     speed1 = 0.9
     # go to gps location
-    while (not pathfinding.is_at_goal() and len(camera.read_markers()) == 0):
+    while (not pathfinding.is_at_goal(marker_radius) and len(camera.read_markers()) == 0):
         print("running pathfinding")
-        #print(imu.get_orientation()[2] % 360.0)
-        #print(gps.read_gps())
         target_cords = pathfinding.pathfinding()
         current_direction = imu.get_orientation()[2] % 360.0
         start_point = gps.read_gps()
         target_direction = pathfinding.get_direction(start_point, target_cords)
-        #print(target_direction)
         while not pathfinding.rotational_equality(target_direction, current_direction) and len(camera.read_markers()) == 0:
             adjust_to_face_target_direction(drive, target_direction, current_direction)
             current_direction = imu.get_orientation()[2] % 360.0
@@ -75,7 +91,7 @@ def pathfind_to_find_marker(drive, gps, imu, camera, ultrasonic, pathfinding):
     drive.set_speeds(0.0, 0.0)
     print("done!")
 
-def main(drive, gps, imu, camera, ultrasonic_left, ultrasonic_right):
+def main(drive, gps, imu, camera, ultrasonic_left, ultrasonic_right, gps_goal):
     # setup
     drive.set_speeds(0.0, 0.0)
     speed1 = 0.9
@@ -87,13 +103,13 @@ def main(drive, gps, imu, camera, ultrasonic_left, ultrasonic_right):
     while imu.get_orientation()[2] == 0:
         pass
     print("imu ready")
-    pathfinding = Pathfinding(gps, imu, camera, (42.08740, -75.96750))
+    pathfinding = Pathfinding(gps, imu, camera, gps_goal)
     # the camera gets mad if it doesn't get to think ahead of time >:(
     camera.get_distances(20)
     time.sleep(3.0)
 
     # go to gps location
-    while (not pathfinding.is_at_goal()):
+    while (not pathfinding.is_at_goal(1.0)):
         print("running pathfinding")
         #print(imu.get_orientation()[2] % 360.0)
         #print(gps.read_gps())
