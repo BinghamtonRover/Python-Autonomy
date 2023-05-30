@@ -30,8 +30,13 @@ class Ultrasonic:
         print("starting thread")
         self.reading_thread.start()
 
+        self.drivable_distance = 90.0
+
     def is_blocked(self):
         return self.distance < 90.0 and self.previous_distance < 90.0
+
+    def is_drivable(self):
+        return self.distance < self.drivable_distance or self.previous_distance < self.drivable_distance
 
     def _trigger_ultrasonic(self):
         if(self.calculating == True):

@@ -9,7 +9,7 @@ from lib.obstacle_avoidance import ObstacleDetectionCamera
 from lib.imu.imu import Imu
 
 class Pathfinding:
-    def __init__(self, gps_reader, imu_reader, camera, target_gps_coords):
+    def __init__(self, gps_reader, imu_reader, camera, target_gps_coords, ultrasonic_left, ultrasonic_right):
         # create readers
         self.gps_reader = gps_reader
         self.imu_reader = imu_reader
@@ -36,6 +36,10 @@ class Pathfinding:
 
         # visual processing data
         self.camera_horizontal_fov = 87
+        
+        # ultrasonics (for blind spot of camera)
+        self.ultrasonic_left = ultrasonic_left
+        self.ultrasonic_right = ultrasonic_right
 
     def _put_behind(self):
         if self.compass_direction < 45.0 or self.compass_direction > 315.0:
@@ -65,6 +69,7 @@ class Pathfinding:
         dist_square = math.pow(self.target_gps_coords[0] - current_gps_position[0], 2) + math.pow(self.target_gps_coords[1] - current_gps_position[1], 2)
         return dist_square <= math.pow(radius * (0.00001 / 1.11), 2)
 
+
     def _read_data(self):
         # read gps, compass, and camera data
         self.current_position = self._gps_to_grid(self.read_gps())
@@ -74,7 +79,7 @@ class Pathfinding:
 
     # read gps coordinates
     def read_gps(self):
-        return self.gps_reader.read_gps()
+        #return self.gps_reader.read_gps()
         gps_vals = []
         gps_reading = self.gps_reader.read_gps()
         while len(gps_vals) < 20:
@@ -127,6 +132,18 @@ class Pathfinding:
                 for p in to_be_blocked:
                     self.is_blocked.add(p)
             index += 1.0
+        if (not self.ultrasonic_left.is_drivable()) or (not self.ultrasonic_right.is_drivable()):
+            self.is_blocked.add(self._get_in_front())
+
+    def _get_in_front(self):
+        if self.compass_direction < 45.0 or self.compass_direction > 315.0:
+            return (self.current_position[0] + 1, self.current_position[1])
+        elif self.compass_direction < 135.0:
+            return (self.current_position[0], self.current_position[1] - 1)
+        elif self.compass_direction < 225.0:
+            return (self.current_position[0] - 1, self.current_position[1])
+        else:
+            return (self.current_position[0], self.current_position[1] + 1)
 
     # take a path found from a-star and return the target node in gps cords
     def get_target_node(self, path):
@@ -188,8 +205,11 @@ class Pathfinding:
                 closed_nodes.add(current_node)
 
         if (not goal_found):
-            print("No solution found")
-            return None
+            print("No solution found, reseting blocked grid")
+            # there should always be a solution, right? O_O
+            # why not just restart and try again?? O_O
+            self.is_blocked = set([])
+            return self._a_star(lambda a, b : (abs(b[0] - a[0]) + abs(b[1] - a[1])))
         else:
             path = []
             parent_node = self.gps_goal
