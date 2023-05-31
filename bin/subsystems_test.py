@@ -2,7 +2,7 @@ import time
 
 from network import ProtoSocket, Device
 from network.src.generated.Protobuf.drive_pb2 import DriveCommand
-from lib.drive import Drive
+from lib.network.drive import Drive
 
 socket = ProtoSocket(port=8000, device=Device.DASHBOARD, destination=("127.0.0.1", 8001))
 drive = Drive(socket)

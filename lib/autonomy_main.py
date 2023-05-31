@@ -1,10 +1,8 @@
 from lib.pathfinding import Pathfinding
 from lib.hardware.imu import Imu
-from lib.gps_reader import GPSReader
-from lib.hardware.temp_tank_drive import Drive
-#from lib.drive import Drive
-from lib.obstacle_avoidance import ObstacleDetectionCamera
-from lib.ultrasonic import Ultrasonic
+from lib.hardware.gps_reader import GPSReader
+from lib.network.drive import Drive
+from lib.cameras.obstacle_avoidance import ObstacleDetectionCamera
 #from network import ProtoSocket, Device
 import time
 import math

@@ -1,5 +1,4 @@
-from lib.depth_camera import DepthCamera
-from lib.obstacle_avoidance import ObstacleDetectionCamera
+from lib.cameras.obstacle_avoidance import ObstacleDetectionCamera
 import time
 import math
 import os
