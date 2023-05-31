@@ -40,7 +40,7 @@ def main():
     camera = ObstacleDetectionCamera(2.4, 50, -0.3)
     print("Initialized")
     fun = lambda a : int(a)
-    time.sleep(5)
+    # time.sleep(5)
     #while True:
     #    print(camera.read_markers())
 
