@@ -30,12 +30,12 @@ class ObstacleDetectionCamera:
         #self.a = 0.055                  # "a" value used in function to calculate maximum slope between blocks in frame, I found this to be about 0.05 through some tests
         self.a = 0.01
         self.fixed_min_slope = -0.00001   # idk maybe try this I feel like shit but the thing above has a bug :skull:
-        self.dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
-        self.parameters = cv2.aruco.DetectorParameters_create()
+        # self.dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
+        # self.parameters = cv2.aruco.DetectorParameters_create()
         # Create a context object. This object owns the handles to all connected realsense devices
         if test: 
             self.pipeline = MockRealSense()
-        else: 
+        else:
             self.pipeline = rs.pipeline()
             self.init_realsense()
 

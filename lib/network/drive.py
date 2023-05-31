@@ -25,5 +25,5 @@ class Drive:
 
 	def set_speeds(self, left, right): 
 		#print(f"Setting left={left}, right={right}")
-		command = DriveCommand(set_left=True, left=left, set_right=True, right=right)
+		command = DriveCommand(set_left=True, left=left, set_right=True, right=-right)
 		self.socket.send_message(command)
