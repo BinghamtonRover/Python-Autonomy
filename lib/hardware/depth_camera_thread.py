@@ -43,7 +43,7 @@ class DepthCameraThread(threading.Thread):
 
 	def run(self):
 		while self.keep_alive:
-            self.set_orientation()
+            # self.set_orientation()
 			self.read_frames()
 			
     def init_realsense(self):
