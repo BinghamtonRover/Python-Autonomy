@@ -27,3 +27,7 @@ class Drive:
 		#print(f"Setting left={left}, right={right}")
 		command = DriveCommand(set_left=True, left=left, set_right=True, right=-right)
 		self.socket.send_message(command)
+
+	def set_camera_tilt(self, angle):
+		command = DriveCommand(front_tilt=angle)
+		self.socket.send_message(command)

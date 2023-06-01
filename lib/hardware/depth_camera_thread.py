@@ -31,6 +31,9 @@ class DepthCameraThread(threading.Thread):
 	def read_color_frame(self):
 		return self.color_frame
 
+    def set_orientation(self):
+        self.collection.drive.set_camera_tilt(self.collection.imu.get_orientation()[0] + 90.0)
+
 	def read_frames(self):
         frames = self.pipeline.wait_for_frames()
         self.depth_frame = frames.get_depth_frame()
@@ -40,6 +43,7 @@ class DepthCameraThread(threading.Thread):
 
 	def run(self):
 		while self.keep_alive:
+            self.set_orientation()
 			self.read_frames()
 			
     def init_realsense(self):
