@@ -1,6 +1,7 @@
 import time
 import cv2
 import threading
+from lib.autonomy_main import Autonomy
 
 from network.generated import *
 
@@ -11,9 +12,13 @@ class AutonomyThread(threading.Thread):
 		self.camera = cv2.VideoCapture(0)
 		self.keep_alive = True
 		self.command = None
+		self.autonomy = Autonomy()
 
 	def run(self): 
-		while self.keep_alive: 
+		while self.keep_alive:
+			time.sleep(1.0)
+		"""
+		while self.keep_alive:
 			# Read camera and send it to the dashboard
 			video = self.collection.video
 			if not self.camera.isOpened(): 
@@ -43,10 +48,17 @@ class AutonomyThread(threading.Thread):
 				destination=self.command.destination,
 			)
 			self.collection.dashboard.send_message(data)
+		"""
 
 	def startTask(self, command): 
 		self.command = command
 		print(f'"Navigating" to {command.destination}')
+		if self.command.task == AutonomyTask.GPS_ONLY:
+			self.autonomy.autonomy_to_cords(self.collection)
+			self.command = None
+		elif self.command.task == AutonomyTask.VISUAL_MARKER:
+			self.autonomy.autonomy_to_marker(self.collection)
+			self.command = None
 
 	def stopTask(self): 
 		self.command = None

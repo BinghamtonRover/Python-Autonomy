@@ -4,12 +4,12 @@ import math
 import time
 import threading
 import statistics
-from lib.gps_reader import GPSReader
-from lib.obstacle_avoidance import ObstacleDetectionCamera
-from lib.imu.imu import Imu
+from lib.hardware.gps_thread import GpsThread
+from lib.cameras.obstacle_avoidance import ObstacleDetectionCamera
+from lib.hardware.imu_thread import ImuThread
 
 class Pathfinding:
-    def __init__(self, gps_reader, imu_reader, camera, target_gps_coords, ultrasonic_left, ultrasonic_right):
+    def __init__(self, gps_reader, imu_reader, camera, target_gps_coords, subsystems, dashboard):
         # create readers
         self.gps_reader = gps_reader
         self.imu_reader = imu_reader
@@ -38,8 +38,11 @@ class Pathfinding:
         self.camera_horizontal_fov = 87
         
         # ultrasonics (for blind spot of camera)
-        self.ultrasonic_left = ultrasonic_left
-        self.ultrasonic_right = ultrasonic_right
+        self.subsystems = susbsystems
+
+        # sending information
+        self.dashboard = dashboard
+        self.send_distance = 6.0
 
     def _put_behind(self):
         if self.compass_direction < 45.0 or self.compass_direction > 315.0:
@@ -59,6 +62,13 @@ class Pathfinding:
 
         # calculate the path and target direction
         path = self._a_star(lambda a, b : (abs(b[0] - a[0]) + abs(b[1] - a[1])))
+
+        # send the calculated path
+        data = AutonomyData(
+            path = map(lambda a : GpsCoordinates(latitude=a[0], longitude=a[1])),
+        )
+        self.dashboard.send_message(data)
+
         target = self.get_target_node(path)
         
         # output target direction and target location
@@ -69,13 +79,18 @@ class Pathfinding:
         dist_square = math.pow(self.target_gps_coords[0] - current_gps_position[0], 2) + math.pow(self.target_gps_coords[1] - current_gps_position[1], 2)
         return dist_square <= math.pow(radius * (0.00001 / 1.11), 2)
 
-
     def _read_data(self):
         # read gps, compass, and camera data
         self.current_position = self._gps_to_grid(self.read_gps())
         self.compass_direction = self._read_compass()
         self.camera_data = self._read_camera()
         self._update_blocked_areas()
+
+        # send new blocked areas (within a given radius to cap data size)
+        data = AutonomyData(
+            obstacles = filter(lambda a : (math.pow(a[0] - self.current_position[0], 2) + math.pow(a[1] - self.current_position[1], 2) <= math.pow(self.send_distance, 2)), self.is_blocked),
+        )
+        self.dashboard.send_message(data)
 
     # read gps coordinates
     def read_gps(self):
@@ -132,7 +147,7 @@ class Pathfinding:
                 for p in to_be_blocked:
                     self.is_blocked.add(p)
             index += 1.0
-        if (not self.ultrasonic_left.is_drivable()) or (not self.ultrasonic_right.is_drivable()):
+        if (not self.subsystems.is_drivable()):
             self.is_blocked.add(self._get_in_front())
 
     def _get_in_front(self):
@@ -235,8 +250,8 @@ class Pathfinding:
             (node[0] - 1, node[1] + 1),
             (node[0] - 1, node[1] - 1)]
 
-    def _set_contains(self, val, set):
-        return val in set
+    def _set_contains(self, val, set_list):
+        return val in set_list
 
     # given two points, create a continuous line of discrete points (integer pairs) from start to end
     def _bresenhams_line_floating_point(self, start, end):

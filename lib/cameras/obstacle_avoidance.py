@@ -16,7 +16,7 @@ class MockRealSense:
 DS5_PRODUCT_IDS = ["0AD1", "0AD2", "0AD3", "0AD4", "0AD5", "0AF6", "0AFE", "0AFF", "0B00", "0B01", "0B03", "0B07","0B3A"]
 
 class ObstacleDetectionCamera:
-    def __init__(self, cutoff_dist, max_zeroes, min_slope, test=False):
+    def __init__(self, cutoff_dist, max_zeroes, min_slope, depth_camera_test, test=False):
         print("[Info] Initializing Obstacle Detection Camera")
         self.test = test
         self.camera_width = 640
@@ -29,27 +29,17 @@ class ObstacleDetectionCamera:
         self.block_height = 15           # height of sections the screen is separated into
         #self.a = 0.055                  # "a" value used in function to calculate maximum slope between blocks in frame, I found this to be about 0.05 through some tests
         self.a = 0.01
-        self.fixed_min_slope = -0.00001   # idk maybe try this I feel like shit but the thing above has a bug :skull:
-        self.dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
-        self.parameters = cv2.aruco.DetectorParameters_create()
+        self.fixed_min_slope = -0.02   # idk maybe try this I feel like shit but the thing above has a bug :skull:
+        # self.dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
+        # self.parameters = cv2.aruco.DetectorParameters_create()
         # Create a context object. This object owns the handles to all connected realsense devices
-        if test: 
-            self.pipeline = MockRealSense()
-        else: 
-            self.pipeline = rs.pipeline()
-            self.init_realsense()
-
-    def init_realsense(self):
-        # Load proper settings
-        self.load_high_density_settings()
-
-        # Configure streams
-        self.config = rs.config()
-        self.config.enable_stream(rs.stream.depth, self.camera_width, self.camera_height, rs.format.z16, 30)
-        self.config.enable_stream(rs.stream.color, self.camera_width, self.camera_height, rs.format.bgr8, 30)
-
-        # Start streaming
-        self.pipeline.start(self.config)
+        self.dashboard = dashboard
+        #if test: 
+        #    self.pipeline = MockRealSense()
+        #else:
+        #    self.pipeline = rs.pipeline()
+        #    self.init_realsense()
+        self.depth_camera_thread = depth_camera_thread
         
     def is_blocked(self):
         if self.test: return False
@@ -94,8 +84,7 @@ class ObstacleDetectionCamera:
     # [sections] is the amount of columns to split the screen into
     def _get_distances(self, sections:int) -> [int]:
         # read depth frame
-        frames = self.pipeline.wait_for_frames()
-        depth = frames.get_depth_frame()
+        depth = self.depth_camera_thread.get_depth_frame()
         if not depth:
             return []
 
@@ -203,8 +192,7 @@ class ObstacleDetectionCamera:
 
     def read_markers(self):
         # Get frame from camera
-        realsense_frames = self.pipeline.wait_for_frames()
-        color = realsense_frames.get_color_frame()
+        color = self.depth_camera_thread.get_color_frame()
         frame = np.asanyarray(color.get_data())
         frame = imutils.resize(frame, width=1000)
         return self._detect_markers(frame)
@@ -236,38 +224,6 @@ class ObstacleDetectionCamera:
             # Calculates center
             center = (int((topLeft[0] + bottomLeft[0]) / 2), int((topLeft[1] + bottomLeft[1]) / 2))
             return center
-        
-    def _find_device_that_supports_advanced_mode(self) :
-        ctx = rs.context()
-        ds5_dev = rs.device()
-        devices = ctx.query_devices();
-        for dev in devices:
-            if dev.supports(rs.camera_info.product_id) and str(dev.get_info(rs.camera_info.product_id)) in DS5_PRODUCT_IDS:
-                if dev.supports(rs.camera_info.name):
-                    print("Found device that supports advanced mode:", dev.get_info(rs.camera_info.name))
-                return dev
-        raise Exception("No device that supports advanced mode was found")
-
-    def load_high_density_settings(self):
-        dev = self._find_device_that_supports_advanced_mode()
-        advnc_mode = rs.rs400_advanced_mode(dev)
-        print("Advanced mode is", "enabled" if advnc_mode.is_enabled() else "disabled")
-        while not advnc_mode.is_enabled():
-            print("Trying to enable advanced mode...")
-            advnc_mode.toggle_advanced_mode(True)
-            # At this point the device will disconnect and re-connect.
-            print("Sleeping for 5 seconds...")
-            time.sleep(5)
-            # The 'dev' object will become invalid and we need to initialize it again
-            dev = find_device_that_supports_advanced_mode()
-            advnc_mode = rs.rs400_advanced_mode(dev)
-            print("Advanced mode is", "enabled" if advnc_mode.is_enabled() else "disabled")
-        with open('high-density-camera.json') as j_file:
-            json_dict = json.load(j_file)
-            advnc_mode.load_json(json.dumps(json_dict))
-
-    def clean_up(self):
-        self.pipeline.stop()
 
     def close(self): 
         self.clean_up()
